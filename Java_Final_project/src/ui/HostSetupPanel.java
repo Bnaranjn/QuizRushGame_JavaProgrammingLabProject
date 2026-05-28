@@ -5,7 +5,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class HostSetupPanel extends JPanel{
-	public HostSetupPanel() {
+	private MainWindow window;
+	
+	public HostSetupPanel(MainWindow window, int pin) {
+		this.window=window;
 		
 		setLayout(new BorderLayout());
 		setBackground(new Color(24, 28, 48));
@@ -47,7 +50,7 @@ public class HostSetupPanel extends JPanel{
 		 centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
 		 
 		//room pin
-		 int pin = 1000 + (int)(Math.random() * 9000);
+		 //int pin = 1000 + (int)(Math.random() * 9000);
 		//room pin title
 		 JLabel roomPinTitle = new JLabel("Room PIN");
 		 roomPinTitle.setForeground(Color.WHITE);
@@ -77,6 +80,10 @@ public class HostSetupPanel extends JPanel{
         centerPanel.add(openLobby);
 
         add(centerPanel, BorderLayout.CENTER);
+        
+        openLobby.addActionListener(e->{
+        	window.showScreen(MainWindow.SCREEN_LOBBY);
+        });
 		
 	}
 }

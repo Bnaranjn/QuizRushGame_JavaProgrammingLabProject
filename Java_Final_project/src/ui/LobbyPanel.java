@@ -1,3 +1,6 @@
+//LOBBY PAGE FOR THE HOST
+//HAS THE GAME START BUTTON AND CAN SEE THE PEOPLE
+
 package ui;
 
 import java.awt.BorderLayout;

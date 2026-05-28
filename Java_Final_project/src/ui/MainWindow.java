@@ -13,15 +13,21 @@ public class MainWindow extends JFrame {
     private HostSetupPanel hostSetupPanel;
     private JoinPanel joinPanel;
     private LobbyPanel lobbyPanel;
+    private int roomPin;
+    
     
     public static final String SCREEN_HOST_SETUP = "HOST_SETUP";
     public static final String SCREEN_JOIN         = "JOIN";
     public static final String SCREEN_LOBBY         = "LOBBY";
     public static final String SCREEN_QUESTION        = "QUESTION";
     public static final String SCREEN_LEADERBOARD = "LEADERBOARD";
-    public MainWindow() {
-    	
+    public static final String SCREEN_WAITINGROOM= "WAITINGROOM";
+    public static final String SCREEN_BET = "BET";
 
+    
+    public MainWindow() {
+    	roomPin = 1000 + (int)(Math.random() * 9000);
+    	System.out.println(roomPin);
         setTitle("QuizRush");
         setSize(500, 600);
 
@@ -33,20 +39,29 @@ public class MainWindow extends JFrame {
 //        joinPanel        = new JoinPanel(this);
 //        lobbyPanel       = new LobbyPanel(this);
 
-        container.add(new HostSetupPanel(), SCREEN_HOST_SETUP);
-        container.add(new JoinPanel(), SCREEN_JOIN);
-        LobbyPanel test = new LobbyPanel(1234);
-        container.add(test, SCREEN_LOBBY);
+        container.add(new HostSetupPanel(this, roomPin), SCREEN_HOST_SETUP);
+        container.add(new JoinPanel(this, roomPin), SCREEN_JOIN);
+        
+        container.add(new LobbyPanel(roomPin), SCREEN_LOBBY);
         container.add(new QuestionPanel(), SCREEN_QUESTION);
         container.add(new LeaderboardPanel(), SCREEN_LEADERBOARD);
+        container.add(new PlayerWaitingLobbyPanel("Sarah"), SCREEN_WAITINGROOM);
+        //container.add(new BetPanel(this), SCREEN_BET); 
         
         ///change the pincode setting
-        //container.add(new LobbyPanel(1234), SCREEN_LOBBY);
+        //container.add(new LobbyPanel(roomPin), SCREEN_LOBBY);
         //cardLayout.show(container, SCREEN_HOST_SETUP);
         //showScreen(SCREEN_LOBBY);
-        //showScreen(SCREEN_QUESTION);
-        showScreen(SCREEN_LEADERBOARD);
+        showScreen(SCREEN_QUESTION);
+        //showScreen(SCREEN_LEADERBOARD);
+        //showScreen(SCREEN_WAITINGROOM);
         //showScreen(SCREEN_JOIN);
+        
+        BetPanel betPanel = new BetPanel(this);
+        container.add(betPanel, SCREEN_BET);
+        betPanel.setScore(1840); // test score for now
+        
+        //showScreen(SCREEN_BET);
                 
         
         add(container);
