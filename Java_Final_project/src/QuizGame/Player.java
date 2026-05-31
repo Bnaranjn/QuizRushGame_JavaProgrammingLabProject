@@ -47,7 +47,7 @@ public class Player extends User{
 		// to do: idk build the bet class ig 
 		// should implement bet  separately??
 		
-		if (bet > this.score) {
+		if (bet > this.getScore()) {
 			throw new InvalidBetException("Betting amount exceeds current score.");
 		} else if(bet < 0) {
 			throw new InvalidBetException("Betting amound cannot be less than 0.");

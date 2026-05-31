@@ -2,21 +2,21 @@ package QuizGame;
 
 abstract class User {
 	// fields
-	String name;
-	int score = 0; // initial score set to 0
+	private String name;
+	private int score = 0; // initial score set to 0
 	
 	// constructor 
-	User(String n ){
+	public User(String n ){
 		this.name = n;
 	}
 	
 	// methods
-	void updateScore(int s) {
+	public void updateScore(int s) {
 		this.score = s;
 	}
 	
-	void getScore() {
-		// currently prints with new line and the score only
-		System.out.println(this.score);
+	public int getScore() {
+		// return the score, instead of displaying it
+		return this.score;
 	}
 }

@@ -3,15 +3,14 @@ package QuizGame;
 public class Host extends User{
 	
 	// constructor
-	Host(String name) {
+	public Host(String name) {
 		super(name);
 	}
 	
 	// methods
-	void addQuestion(Quiz quiz, Question q) {
-		// to do:
-		// build quiz and question obj
-		// then implement this function
+	public void addQuestion(Quiz quiz, Question q) {
+		// adds already built quiz into given quiz
+        quiz.addQuestion(q);
 	}
 	
 }
