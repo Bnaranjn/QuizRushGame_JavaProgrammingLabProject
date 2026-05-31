@@ -1,0 +1,25 @@
+Question and Quiz classes implemented:
+	Question: 
+		// 06/01 12 am - may need few additional methods
+		// added 2 different getOptions methods - additional 1 from the og UML
+	Quiz: no comment
+
+GameSession: 
+	bit troublesome -- pushed ver (as of jun 01 1:14 am) is incomplete
+	
+	// 06/01 new field currQuestion - not in og UML
+		// should each Question have different score ?
+		// should eacH Question have different timer ?
+	
+	the methods n stuff are declared but not fully defined -- extra comments needed
+
+	the timer func - threading?
+ETC:
+	minor visibility correction through the classes
+
+
+to do:
+maybe start linking the UI - atleast with the questions
+figure out the timer
+
+!! the server class
