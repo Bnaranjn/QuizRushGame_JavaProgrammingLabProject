@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -23,12 +24,21 @@ import javax.swing.border.EmptyBorder;
 
 public class LobbyPanel extends JPanel {
 	private JPanel playerListPanel; 
-	public LobbyPanel(int pin) {
+	private MainWindow window;
+	private static final Color[] PLAYER_COLORS = {
+		    new Color(255, 183, 3),   // yellow
+		    new Color(230, 57, 70),   // red
+		    new Color(142, 68, 173),  // purple
+		    new Color(255, 105, 180), // pink
+		    new Color(0, 51, 204)   // blue
+		};
+	public LobbyPanel(MainWindow window, int pin) {
+		this.window = window;
 		
 		setLayout(new BorderLayout());
 		setBackground(new Color(24, 28, 48));
 		
-		// Main content panel
+		//Main content panel
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBackground(new Color(24, 28, 48));
@@ -45,13 +55,14 @@ public class LobbyPanel extends JPanel {
 		 roomPinTitle.setFont(new Font("Arial", Font.BOLD, 18));
 		 roomPinTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		// Display pin
+		//Display pin
 		 
 		 JLabel roomPinLabel = new JLabel(String.valueOf(pin));
 		 roomPinLabel.setForeground(new Color(255, 215, 0));
 		 roomPinLabel.setFont(new Font("Arial", Font.BOLD, 40));
 		 roomPinLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-		// Add to panel
+		//add to panel
+		 centerPanel.add(title);
 		 centerPanel.add(roomPinTitle);
 		 centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 		 centerPanel.add(roomPinLabel);
@@ -64,10 +75,12 @@ public class LobbyPanel extends JPanel {
 		 waitingLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		 centerPanel.add(waitingLabel);
 		 centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-		 //player names
+		 
+		 
+		 //player names 
+		 // save players name into list and access them and display them
 		 playerListPanel = new JPanel();
-		 playerListPanel.setLayout(new BoxLayout(playerListPanel, BoxLayout.Y_AXIS));
-		 playerListPanel.setBackground(new Color(24, 28, 48));
+		 playerListPanel.setLayout(new BoxLayout(playerListPanel, BoxLayout.Y_AXIS));playerListPanel.setBackground(new Color(24, 28, 48));
 		 playerListPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		 centerPanel.add(playerListPanel);
 		 centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -84,17 +97,23 @@ public class LobbyPanel extends JPanel {
 	        centerPanel.add(joinBtn);
 
 	        add(centerPanel, BorderLayout.CENTER);
+	        //addPlayer("Naranjn");
+	        joinBtn.addActionListener(e -> {
+	            window.loadCurrentQuestion();
+	        });
 	}
-	// Member A calls this when a new player joins over the socket
+	//host calls this when a new player joins over the socket
 	public void addPlayer(String playerName) {
 	    SwingUtilities.invokeLater(() -> {
-	        JLabel chip = new JLabel("-" + playerName);
-	        chip.setForeground(new Color(100, 220, 150));
-	        chip.setFont(new Font("Arial", Font.PLAIN, 16));
-	        chip.setAlignmentX(Component.CENTER_ALIGNMENT);
-	        playerListPanel.add(chip);
-	        playerListPanel.revalidate();
-	        playerListPanel.repaint();
-	    });
+	    	
+	    	JLabel chip = new JLabel("-" + playerName); 
+	    	chip.setForeground(new Color(100, 220, 150)); 
+	    	chip.setFont(new Font("Arial", Font.PLAIN, 16));
+
+	    	chip.setAlignmentX(Component.CENTER_ALIGNMENT);
+	    	playerListPanel.add(chip); 
+	    	playerListPanel.revalidate(); 
+	    	playerListPanel.repaint(); 
+	    	}); 
 	}
 }

@@ -39,16 +39,16 @@ public class HostSetupPanel extends JPanel{
         centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
         
 		//name field
-		JTextField nameField = new JTextField("Enter your name");
-		 nameField.setMaximumSize(new Dimension(300, 40));
-		 nameField.setFont(new Font("Arial", Font.PLAIN, 16));
-		 nameField.setBorder(BorderFactory.createCompoundBorder(
-	                BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
-	                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-	        ));
-		 centerPanel.add(nameField);
-		 centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-		 
+//		JTextField nameField = new JTextField("Enter your name");
+//		 nameField.setMaximumSize(new Dimension(300, 40));
+//		 nameField.setFont(new Font("Arial", Font.PLAIN, 16));
+//		 nameField.setBorder(BorderFactory.createCompoundBorder(
+//	                BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
+//	                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+//	        ));
+//		 centerPanel.add(nameField);
+//		 centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+//		 
 		//room pin
 		 //int pin = 1000 + (int)(Math.random() * 9000);
 		//room pin title

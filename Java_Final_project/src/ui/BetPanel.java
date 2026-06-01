@@ -260,4 +260,9 @@ public class BetPanel extends JPanel {
         l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
+
+	public void startTimer() {
+		// TODO Auto-generated method stub
+		
+	}
 }
