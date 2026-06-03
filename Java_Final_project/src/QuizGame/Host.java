@@ -1,16 +1,14 @@
 package QuizGame;
 
-public class Host extends User{
-	
-	// constructor
-	public Host(String name) {
-		super(name);
-	}
-	
-	// methods
-	public void addQuestion(Quiz quiz, Question q) {
-		// adds already built quiz into given quiz
+/**
+ * Host: The quiz game host. Can add questions to a quiz.
+ */
+public class Host extends User {
+    public Host(String name) {
+        super(name);
+    }
+
+    public void addQuestion(Quiz quiz, Question q) {
         quiz.addQuestion(q);
-	}
-	
+    }
 }

@@ -1,157 +1,122 @@
 package ui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 
+/**
+ * JoinPanel: Screen where a player enters the host's IP, PIN, and their nickname.
+ */
+public class JoinPanel extends JPanel {
+    private final MainWindow window;
 
-public class JoinPanel extends JPanel{
-	private MainWindow window;
-	public JoinPanel(MainWindow window, int roomPin) {
-		this.window=window;
-		
-		setLayout(new BorderLayout());
-		setBackground(new Color(24, 28, 48));
-		
-		// Main content panel
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBackground(new Color(24, 28, 48));
-        centerPanel.setBorder(new EmptyBorder(80, 60, 80, 60));
+    public JoinPanel(MainWindow window, int roomPin) {
+        this.window = window;
+        setLayout(new BorderLayout());
+        setBackground(new Color(24, 28, 48));
 
-		//title at the top
-		JLabel title= new JLabel("QuizRush", SwingConstants.CENTER);
-		title.setAlignmentX(Component.CENTER_ALIGNMENT);
-		title.setFont(new Font("Arial", Font.BOLD, 36));
-		title.setForeground(Color.WHITE);
-		
-		//add(title, BorderLayout.NORTH);
-		
-		//subtitle
-		JLabel subtitle= new JLabel("Join a quiz. Enter the PIN from your host");
-		subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-	    subtitle.setFont(new Font("Arial", Font.PLAIN, 16));
-	    subtitle.setForeground(new Color(200, 200, 200));
-	    //space
-	    centerPanel.add(title);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        centerPanel.add(subtitle);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-        
-     // ================= PIN LABEL =================
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.setBackground(new Color(24, 28, 48));
+        center.setBorder(new EmptyBorder(60, 60, 60, 60));
 
-        JLabel pinLabel = new JLabel("Game PIN");
+        JLabel title = new JLabel("QuizRush");
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setFont(new Font("Arial", Font.BOLD, 36));
+        title.setForeground(Color.WHITE);
 
-        pinLabel.setForeground(Color.WHITE);
+        JLabel subtitle = new JLabel("Join a game. Enter the host's IP and PIN.");
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitle.setFont(new Font("Arial", Font.PLAIN, 14));
+        subtitle.setForeground(new Color(180, 180, 200));
 
-        pinLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        // Host IP field
+        JTextField ipField = styledField("Host IP  (e.g. 192.168.1.5)");
 
-        pinLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // PIN field
+        JTextField pinField = styledField("Room PIN");
 
-        centerPanel.add(pinLabel);
+        // Nickname field
+        JTextField nameField = styledField("Your Nickname");
 
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        // Join button
+        JButton joinBtn = new JButton("Join >>");
+        joinBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        joinBtn.setFont(new Font("Arial", Font.BOLD, 18));
+        joinBtn.setBackground(new Color(90, 120, 255));
+        joinBtn.setForeground(Color.WHITE);
+        joinBtn.setFocusPainted(false);
+        joinBtn.setBorder(new EmptyBorder(12, 40, 12, 40));
+        joinBtn.setMaximumSize(new Dimension(260, 52));
 
+        joinBtn.addActionListener(e -> {
+            String ip   = ipField.getText().trim();
+            String pin  = pinField.getText().trim();
+            String name = nameField.getText().trim();
 
-        // ================= PIN FIELD =================
-
-        JTextField pinField = new JTextField();
-
-        pinField.setMaximumSize(new Dimension(300, 40));
-
-        pinField.setFont(new Font("Arial", Font.PLAIN, 16));
-
-        pinField.setBorder(
-            BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(
-                    new Color(100, 100, 100), 1
-                ),
-                BorderFactory.createEmptyBorder(
-                    10, 10, 10, 10
-                )
-            )
-        );
-
-        centerPanel.add(pinField);
-
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 25)));
-
-
-        // ================= NAME LABEL =================
-
-        JLabel nameLabel = new JLabel("Nickname");
-
-        nameLabel.setForeground(Color.WHITE);
-
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        centerPanel.add(nameLabel);
-
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-
-
-        // ================= NAME FIELD =================
-
-        JTextField nameField = new JTextField();
-
-        nameField.setMaximumSize(new Dimension(300, 40));
-
-        nameField.setFont(new Font("Arial", Font.PLAIN, 16));
-
-        nameField.setBorder(
-            BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(
-                    new Color(100, 100, 100), 1
-                ),
-                BorderFactory.createEmptyBorder(
-                    10, 10, 10, 10
-                )
-            )
-        );
-
-        centerPanel.add(nameField);
-
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-		 
-		//button
-		JButton joinBtn = new JButton("Join ->");
-		joinBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-		joinBtn.setFont(new Font("Arial", Font.BOLD, 18));
-		joinBtn.setBackground(new Color(90, 120, 255));
-		joinBtn.setForeground(Color.WHITE);
-		joinBtn.setFocusPainted(false);
-		joinBtn.setBorder(new EmptyBorder(12, 30, 12, 30));
-		joinBtn.setMaximumSize(new Dimension(250, 55));
-		
-		//add(openLobby, BorderLayout.SOUTH);
-        centerPanel.add(joinBtn);
-
-        add(centerPanel, BorderLayout.CENTER);
-        
-        joinBtn.addActionListener(e->{
-        	String enteredPin = pinField.getText();
-        	if(enteredPin.contentEquals(String.valueOf(roomPin))) {
-        		window.showScreen(MainWindow.SCREEN_WAITINGROOM);
-        	}
-        	else {
-        		JOptionPane.showMessageDialog(this,  "Wrong PIN!");
-        	}
+            if (ip.isEmpty()) {
+                JOptionPane.showMessageDialog(window, "Please enter the host's IP address.");
+                return;
+            }
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(window, "Please enter a nickname.");
+                return;
+            }
+            window.joinGame(name, ip);
+            window.showScreen(MainWindow.SCREEN_WAITINGROOM);
         });
-		
-	}
+
+        JButton backBtn = new JButton("<< Back");
+        backBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        backBtn.setFont(new Font("Arial", Font.PLAIN, 14));
+        backBtn.setBackground(new Color(40, 45, 70));
+        backBtn.setForeground(new Color(180, 180, 200));
+        backBtn.setFocusPainted(false);
+        backBtn.setBorder(new EmptyBorder(8, 20, 8, 20));
+        backBtn.addActionListener(e -> window.showScreen(MainWindow.SCREEN_HOST_SETUP));
+
+        center.add(title);
+        center.add(Box.createRigidArea(new Dimension(0, 8)));
+        center.add(subtitle);
+        center.add(Box.createRigidArea(new Dimension(0, 36)));
+        center.add(fieldLabel("Host IP Address"));
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(ipField);
+        center.add(Box.createRigidArea(new Dimension(0, 16)));
+        center.add(fieldLabel("Room PIN"));
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(pinField);
+        center.add(Box.createRigidArea(new Dimension(0, 16)));
+        center.add(fieldLabel("Nickname"));
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(nameField);
+        center.add(Box.createRigidArea(new Dimension(0, 30)));
+        center.add(joinBtn);
+        center.add(Box.createRigidArea(new Dimension(0, 12)));
+        center.add(backBtn);
+
+        add(center, BorderLayout.CENTER);
+    }
+
+    private JLabel fieldLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setForeground(Color.WHITE);
+        label.setFont(new Font("Arial", Font.BOLD, 13));
+        return label;
+    }
+
+    private JTextField styledField(String placeholder) {
+        JTextField field = new JTextField();
+        field.setMaximumSize(new Dimension(320, 42));
+        field.setFont(new Font("Arial", Font.PLAIN, 15));
+        field.setBackground(new Color(36, 41, 66));
+        field.setForeground(Color.WHITE);
+        field.setCaretColor(Color.WHITE);
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 90, 140), 1),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        return field;
+    }
 }

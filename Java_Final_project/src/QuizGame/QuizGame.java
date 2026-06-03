@@ -1,12 +1,10 @@
 package QuizGame;
-// import the classes
-//import QuizGame.User;
 
-
+import javax.swing.SwingUtilities;
+import ui.MainWindow;
 
 public class QuizGame {
-	public static void main(String[] arg) {
-		
-	}
-	
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
+    }
 }

@@ -4,125 +4,96 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * PlayerWaitingLobbyPanel: Shown to a player after joining, while waiting for host to start.
+ * setMyName() and setPlayerList() are called from MainWindow via network messages.
+ */
 public class PlayerWaitingLobbyPanel extends JPanel {
+    private final JLabel playerNameLabel;
+    private final JPanel playerListPanel;
+    private final JLabel countLabel;
 
-    private JPanel playerListPanel;
-
-    public PlayerWaitingLobbyPanel(String playerName) {
-
+    public PlayerWaitingLobbyPanel(MainWindow window) {
         setLayout(new BorderLayout());
         setBackground(new Color(24, 28, 48));
 
-        // ================= CENTER PANEL =================
-
-        JPanel centerPanel = new JPanel();
-
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-
-        centerPanel.setBackground(new Color(24, 28, 48));
-
-        centerPanel.setBorder(new EmptyBorder(50, 50, 50, 50));
-
-        // TITLE
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.setBackground(new Color(24, 28, 48));
+        center.setBorder(new EmptyBorder(50, 50, 50, 50));
 
         JLabel title = new JLabel("QuizRush");
-
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         title.setFont(new Font("Arial", Font.BOLD, 38));
-
         title.setForeground(Color.WHITE);
 
-        // WAITING MESSAGE
-
         JLabel waitingLabel = new JLabel("Waiting for host to start...");
-
         waitingLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        waitingLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-
-        waitingLabel.setForeground(new Color(200, 200, 200));
-
-        // PLAYER NAME
+        waitingLabel.setFont(new Font("Arial", Font.PLAIN, 17));
+        waitingLabel.setForeground(new Color(180, 180, 200));
 
         JLabel connectedLabel = new JLabel("Connected as");
-
         connectedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        connectedLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        connectedLabel.setForeground(new Color(160, 160, 180));
 
-        connectedLabel.setForeground(new Color(180, 180, 180));
-
-        connectedLabel.setFont(new Font("Arial", Font.PLAIN, 15));
-
-        JLabel playerNameLabel = new JLabel(playerName);
-
+        playerNameLabel = new JLabel("...");
         playerNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        playerNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
         playerNameLabel.setForeground(new Color(255, 215, 0));
 
-        playerNameLabel.setFont(new Font("Arial", Font.BOLD, 32));
-
-        // PLAYERS TITLE
-
-        JLabel playersTitle = new JLabel("Players Joined");
-
+        JLabel playersTitle = new JLabel("Players in Lobby");
         playersTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        playersTitle.setFont(new Font("Arial", Font.BOLD, 16));
         playersTitle.setForeground(Color.WHITE);
 
-        playersTitle.setFont(new Font("Arial", Font.BOLD, 20));
-
-        // PLAYER LIST PANEL
+        countLabel = new JLabel("0 player(s)");
+        countLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        countLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        countLabel.setForeground(new Color(150, 200, 150));
 
         playerListPanel = new JPanel();
-
         playerListPanel.setLayout(new BoxLayout(playerListPanel, BoxLayout.Y_AXIS));
-
         playerListPanel.setBackground(new Color(24, 28, 48));
-
         playerListPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // SAMPLE PLAYERS
+        center.add(title);
+        center.add(Box.createRigidArea(new Dimension(0, 16)));
+        center.add(waitingLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 30)));
+        center.add(connectedLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(playerNameLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 30)));
+        center.add(playersTitle);
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(countLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 12)));
+        center.add(playerListPanel);
 
-        addPlayer("Alice");
-        addPlayer("Bob");
-        addPlayer(playerName);
-
-        // ADD COMPONENTS
-
-        centerPanel.add(title);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        centerPanel.add(waitingLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-
-        centerPanel.add(connectedLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        centerPanel.add(playerNameLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-
-        centerPanel.add(playersTitle);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        centerPanel.add(playerListPanel);
-
-        add(centerPanel, BorderLayout.CENTER);
+        add(center, BorderLayout.CENTER);
     }
 
-    // reusable player display
+    /** Called when the player's name is known after joining. */
+    public void setMyName(String name) {
+        SwingUtilities.invokeLater(() -> playerNameLabel.setText(name));
+    }
 
-    public void addPlayer(String playerName) {
-
-        JLabel playerLabel = new JLabel("• " + playerName);
-
-        playerLabel.setForeground(Color.WHITE);
-
-        playerLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-
-        playerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        playerListPanel.add(playerLabel);
-
-        playerListPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+    /** Called from MainWindow when PLAYER_LIST message arrives. */
+    public void setPlayerList(String[] names) {
+        SwingUtilities.invokeLater(() -> {
+            playerListPanel.removeAll();
+            for (String name : names) {
+                JLabel lbl = new JLabel("- " + name);
+                lbl.setForeground(Color.WHITE);
+                lbl.setFont(new Font("Arial", Font.PLAIN, 16));
+                lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+                playerListPanel.add(lbl);
+                playerListPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+            }
+            countLabel.setText(names.length + " player(s)");
+            playerListPanel.revalidate();
+            playerListPanel.repaint();
+        });
     }
 }

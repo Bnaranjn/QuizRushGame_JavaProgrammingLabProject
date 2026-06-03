@@ -1,22 +1,31 @@
 package QuizGame;
 
-abstract class User {
-	// fields
-	private String name;
-	private int score = 0; // initial score set to 0
-	
-	// constructor 
-	public User(String n ){
-		this.name = n;
-	}
-	
-	// methods
-	public void updateScore(int s) {
-		this.score = s;
-	}
-	
-	public int getScore() {
-		// return the score, instead of displaying it
-		return this.score;
-	}
+/**
+ * User: Abstract base for Host and Player.
+ * Fixed: updateScore now ADDS to score instead of replacing it.
+ */
+public abstract class User {
+    private final String name;
+    private int score = 0;
+
+    public User(String name) {
+        this.name = name;
+    }
+
+    /** Adds 'points' to the current score. */
+    public void updateScore(int points) {
+        this.score += points;   // Bug fix: was "= points", now "+= points"
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    public int getScore() {
+        return this.score;
+    }
+
+    public String getName() {
+        return this.name;
+    }
 }

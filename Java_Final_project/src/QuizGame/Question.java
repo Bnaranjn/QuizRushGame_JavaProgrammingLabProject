@@ -1,45 +1,40 @@
 package QuizGame;
 
-// 06/01 12 am - may need few additional methods
-// added 2 different getOptions methods - additional 1 from the og UML
-
+/**
+ * Question: Holds a quiz question, its four options, and the correct answer index.
+ */
 public class Question {
-	// fields
-	private String text;
-	private String[] options;
-	private int correctAnswer;
-	
-	// constructor
-	public Question(String text, String[] options, int correctAnswer){
-		this.text = text;
-		this.options = options;
-		this.correctAnswer = correctAnswer;
-	}
-	
-	// methods
-	public boolean isCorrect(int answer) {
-		return(this.correctAnswer == answer);
-	}
-	
-	public String getText() {
-		return this.text;
-	}
-	
-	public String getOptionsFormated() {
-		// all of the options are merged into one string
-		//		maybe useful when displaying the whole options under the questions
-		// may or may not change the format
-	    String result = "";
-	    for (int i = 0; i < options.length; i++) {
-	        result += (i + 1) + ". " + options[i] + "\n";
-	    }
-	    return result;
-	}
-	
-	public String[] getOptionsArr() {
-		// return the options arr
-		// used to get text on each buttons
-		return this.options;
-	}
-	
+    private final String text;
+    private final String[] options;
+    private final int correctAnswer;
+
+    public Question(String text, String[] options, int correctAnswer) {
+        this.text          = text;
+        this.options       = options;
+        this.correctAnswer = correctAnswer;
+    }
+
+    public boolean isCorrect(int answer) {
+        return this.correctAnswer == answer;
+    }
+
+    public String getText() {
+        return this.text;
+    }
+
+    public String[] getOptionsArr() {
+        return this.options;
+    }
+
+    public int getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public String getOptionsFormatted() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < options.length; i++) {
+            sb.append((i + 1)).append(". ").append(options[i]).append("\n");
+        }
+        return sb.toString();
+    }
 }
