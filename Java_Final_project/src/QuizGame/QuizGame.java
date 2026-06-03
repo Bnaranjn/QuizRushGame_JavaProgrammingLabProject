@@ -8,3 +8,5 @@ public class QuizGame {
         SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
     }
 }
+
+//host question panel(host's screen when players answering quesitons)
