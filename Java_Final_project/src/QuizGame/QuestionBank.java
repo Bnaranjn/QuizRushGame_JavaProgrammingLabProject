@@ -1,4 +1,4 @@
-package ui;
+package QuizGame;
 
 /**
  * QuestionBank: Static store of quiz questions.

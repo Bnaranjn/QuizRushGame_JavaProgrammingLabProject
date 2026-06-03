@@ -4,6 +4,7 @@ import java.awt.CardLayout;
 import java.util.*;
 import javax.swing.*;
 import network.*;
+import QuizGame.*;
 
 /**
  * MainWindow: Central application window using CardLayout for screens.
@@ -22,8 +23,8 @@ import network.*;
  */
 public class MainWindow extends JFrame implements MessageListener {
 
-    // ── Screen name constants ──────────────────────────────────────────────
-    public static final String SCREEN_HOST_SETUP  = "HOST_SETUP";
+    // Screen name constants 
+	public static final String SCREEN_HOST_SETUP  = "HOST_SETUP";
     public static final String SCREEN_JOIN         = "JOIN";
     public static final String SCREEN_LOBBY        = "LOBBY";
     public static final String SCREEN_WAITINGROOM  = "WAITINGROOM";
@@ -32,11 +33,11 @@ public class MainWindow extends JFrame implements MessageListener {
     public static final String SCREEN_BET          = "BET";
     public static final String SCREEN_LEADERBOARD  = "LEADERBOARD";
 
-    // ── Layout ────────────────────────────────────────────────────────────
+    //Layout 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel container = new JPanel(cardLayout);
 
-    // ── Panels ────────────────────────────────────────────────────────────
+    //Panels 
     private final HostSetupPanel      hostSetupPanel;
     private final JoinPanel           joinPanel;
     private final LobbyPanel          lobbyPanel;
@@ -46,26 +47,34 @@ public class MainWindow extends JFrame implements MessageListener {
     private final BetPanel            betPanel;
     private final LeaderboardPanel    leaderboardPanel;
 
-    // ── Network ───────────────────────────────────────────────────────────
+    //Network 
     private QuizServer server;   // non-null only on the host machine
     private QuizClient client;
+    // Backend player object for THIS client
+    // All score and bet state is owned by this object, not by MainWindow.
+    private Player localPlayer;
+ 
 
-    // ── Game state ────────────────────────────────────────────────────────
+    //Game state 
+    //login doesnt validitate roompin - may not be needed
     private final int roomPin = 1000 + (int)(Math.random() * 9000);
     private String myName = "Player";
     private boolean isHost = false;
 
     /** Score tracked locally for THIS window (host plays too if desired). */
-    private int myScore = 0;
+    //private int myScore = 0;
     private int currentQuestionIndex = 0;
-
+    
+    //---------
+    //BACKEND 
+    //--------
     /** Bet state for the current bet round. */
-    private int pendingBetAmount     = 0;
-    private int pendingBetMultiplier = 1;
-    private boolean hasBet           = false;
+    //private int pendingBetAmount     = 0;
+    //private int pendingBetMultiplier = 1;
+    //private boolean hasBet           = false;
+    //private final Map<String, Integer> playerScores = new LinkedHashMap<>();
     
-    private final Map<String, Integer> playerScores = new LinkedHashMap<>();
-    
+    //CONSTRUCTOR
     public MainWindow() {
         setTitle("QuizRush");
         setSize(500, 620);
@@ -93,14 +102,18 @@ public class MainWindow extends JFrame implements MessageListener {
         cardLayout.show(container, SCREEN_HOST_SETUP);
     }
     
+    //-------------
+   //NAVIGATION
     public void showScreen(String name) {
         cardLayout.show(container, name);
     }
+    //HOSTING/JOINING --------------
     
     /** Called when host clicks "Open Lobby". Starts the server and joins as host client. */
     public void startHosting() {
         isHost = true;
         myName = "Host";
+        localPlayer = new Player(myName);
         try {
             server = new QuizServer();
             server.startServer(5000);
@@ -122,6 +135,7 @@ public class MainWindow extends JFrame implements MessageListener {
     /** Called from JoinPanel when player enters name and clicks Join. */
     public void joinGame(String name, String ip) {
         myName = (name == null || name.isBlank()) ? "Player" : name.trim();
+        localPlayer = new Player(myName);
         waitingPanel.setMyName(myName);
         try {
             client = new QuizClient(ip, 5000, this);
@@ -131,6 +145,8 @@ public class MainWindow extends JFrame implements MessageListener {
                 + "\n\nMake sure the host's IP is correct and the game is open.");
         }
     }
+    
+    //QUESTION FLOW
 
     /** Loads question at given index, called when QUESTION|idx arrives. */
     public void loadQuestion(int idx) {
@@ -138,7 +154,7 @@ public class MainWindow extends JFrame implements MessageListener {
         String   text    = QuestionBank.getText(idx);
         String[] options = QuestionBank.getOptions(idx);
         int      total   = QuestionBank.getTotalQuestions();
-        questionPanel.loadQuestion(text, options, idx + 1, total, myScore);
+        questionPanel.loadQuestion(text, options, idx + 1, total, localPlayer.getScore());
         showScreen(SCREEN_QUESTION);
     }
 
@@ -146,39 +162,76 @@ public class MainWindow extends JFrame implements MessageListener {
      * Called by QuestionPanel when the player clicks an answer (or time runs out).
      * Sends ANSWER message and shows the reveal screen.
      */
+    
+    //-----------------------------------
+    //this to be at the backend - 
+    //-----------------------------
+//    public void submitAnswer(int selectedAnswer) {
+//        questionPanel.stopTimer();
+//
+//        int correct      = QuestionBank.getCorrectIndex(currentQuestionIndex);
+//        String[] options = QuestionBank.getOptions(currentQuestionIndex);
+//        int pointsEarned = 0;
+//
+//        if (selectedAnswer == correct) {
+//            // Base 500 + up-to-660 speed bonus (20 s * 33 pts/s)
+//            pointsEarned = 500 + (questionPanel.getTimeLeft() * 33);
+//        }
+//
+//        // Apply pending bet result
+//        if (hasBet && pendingBetAmount > 0) {
+//            if (selectedAnswer == correct) {
+//                pointsEarned += pendingBetAmount * (pendingBetMultiplier - 1);
+//            } else {
+//                pointsEarned -= pendingBetAmount;
+//            }
+//            hasBet = false;
+//            pendingBetAmount     = 0;
+//            pendingBetMultiplier = 1;
+//        }
+//
+//        myScore = Math.max(0, myScore + pointsEarned);
+//        playerScores.put(myName, myScore);
+//
+//        // Notify server of score
+//        sendToServer("SCORE_UPDATE|" + myName + "|" + myScore);
+//
+//        revealPanel.showResult(selectedAnswer, correct, options,
+//                               pointsEarned > 0 ? pointsEarned : 0,
+//                               selectedAnswer == correct);
+//        showScreen(SCREEN_REVEAL);
+//    }
+    //replacement in the ui page
     public void submitAnswer(int selectedAnswer) {
+    	if(isHost) return; //dont take hosts answer
+
         questionPanel.stopTimer();
+        int timeLeft= questionPanel.getTimeLeft();
+        int      correct  = QuestionBank.getCorrectIndex(currentQuestionIndex);
+        String[] options  = QuestionBank.getOptions(currentQuestionIndex);
+        boolean  isCorrect = (selectedAnswer == correct);
+        //passes the time to the player
+        try {
+            localPlayer.submitAnswer(selectedAnswer, timeLeft);  //store it in Player
+        } catch (InvalidAnswerException e) {/* timeout -1 is valid, won't throw */ }
 
-        int correct      = QuestionBank.getCorrectIndex(currentQuestionIndex);
-        String[] options = QuestionBank.getOptions(currentQuestionIndex);
-        int pointsEarned = 0;
-
-        if (selectedAnswer == correct) {
-            // Base 500 + up-to-660 speed bonus (20 s * 33 pts/s)
-            pointsEarned = 500 + (questionPanel.getTimeLeft() * 33);
-        }
-
-        // Apply pending bet result
-        if (hasBet && pendingBetAmount > 0) {
-            if (selectedAnswer == correct) {
-                pointsEarned += pendingBetAmount * (pendingBetMultiplier - 1);
-            } else {
-                pointsEarned -= pendingBetAmount;
-            }
-            hasBet = false;
-            pendingBetAmount     = 0;
-            pendingBetMultiplier = 1;
-        }
-
-        myScore = Math.max(0, myScore + pointsEarned);
-        playerScores.put(myName, myScore);
-
-        // Notify server of score
-        sendToServer("SCORE_UPDATE|" + myName + "|" + myScore);
-
-        revealPanel.showResult(selectedAnswer, correct, options,
-                               pointsEarned > 0 ? pointsEarned : 0,
-                               selectedAnswer == correct);
+        //SCORING HAPPENS IN PLAYER
+        //!!!! - RESOLVEANSWER FUNCTION
+        int pointsEarned = localPlayer.resolveAnswer(isCorrect, localPlayer.getAnswerTimeLeft());
+        
+        //NOTIFYING THE SERVER
+        sendToServer(
+            "ANSWER|"
+            + myName
+            + "|"
+            + selectedAnswer
+            + "|"
+            + timeLeft
+        );
+//        revealPanel.showResult(selectedAnswer, correct, options,
+//                Math.max(0, pointsEarned), isCorrect);
+        revealPanel.showResult(selectedAnswer, correct, options, pointsEarned,isCorrect);
+        
         showScreen(SCREEN_REVEAL);
     }
 
@@ -188,52 +241,84 @@ public class MainWindow extends JFrame implements MessageListener {
      */
     public void goToNextScreen() {
         if (!isHost) return;   // Only the host drives game progression
+        int total = QuestionBank.getTotalQuestions();
+        
+        
+        //GAMEFLOW DECISION - BUILD NEXTEVENT IN GAMESESSION
+        GameSession.NextEvent event = GameSession.getNextEvent(currentQuestionIndex, total);
+        
+        switch (event) {
+        case BET_ROUND:
+            server.broadcast("BET_ROUND|" + (currentQuestionIndex + 1));
+            break;
 
-        int next = currentQuestionIndex + 1;
+        case GAME_OVER:
+            // Server owns the scores and builds the leaderboard string
+            server.broadcastLeaderboard();
+            break;
 
-        // Bet round after Q2, Q5, Q8 (every 3rd question, 0-indexed)
-        // i.e. after question indices 2, 5, 8
-        if (next <= QuestionBank.getTotalQuestions()
-                && (next == 3 || next == 6 || next == 9)) {
-            server.broadcast("BET_ROUND|" + next);
-            return;
+        case NEXT_QUESTION:
+            server.broadcast("QUESTION|" + (currentQuestionIndex + 1));
+            break;
         }
 
-        if (next >= QuestionBank.getTotalQuestions()) {
-            // Collect leaderboard
-            broadcastLeaderboard();
-            return;
-        }
-
-        server.broadcast("QUESTION|" + next);
+//        int next = currentQuestionIndex + 1;
+//
+//        // Bet round after Q2, Q5, Q8 (every 3rd question, 0-indexed)
+//        // i.e. after question indices 2, 5, 8
+//        if (next <= QuestionBank.getTotalQuestions()
+//                && (next == 3 || next == 6 || next == 9)) {
+//            server.broadcast("BET_ROUND|" + next);
+//            return;
+//        }
+//
+//        if (next >= QuestionBank.getTotalQuestions()) {
+//            // Collect leaderboard
+//            broadcastLeaderboard();
+//            return;
+//        }
+//
+//        server.broadcast("QUESTION|" + next);
     }
 
     /** Host broadcasts LEADERBOARD message then GAME_OVER. */
-    private void broadcastLeaderboard() {
-        StringBuilder sb = new StringBuilder();
-        playerScores.forEach((name, score) ->
-            sb.append(name).append(":").append(score).append(","));
-        if (sb.length() > 0) sb.setLength(sb.length() - 1);
-        server.broadcast("LEADERBOARD|" + sb);
-        server.broadcast("GAME_OVER");
-    }
+    //
+//    private void broadcastLeaderboard() {
+//        StringBuilder sb = new StringBuilder();
+//        playerScores.forEach((name, score) ->
+//            sb.append(name).append(":").append(score).append(","));
+//        if (sb.length() > 0) sb.setLength(sb.length() - 1);
+//        server.broadcast("LEADERBOARD|" + sb);
+//        server.broadcast("GAME_OVER");
+//    }
 
     /** Called by BetPanel "Place Bet" button. */
+//    public void placeBet(int amount, int multiplier) {
+//    	
+////        this.pendingBetAmount     = amount;
+////        this.pendingBetMultiplier = multiplier;
+////        this.hasBet               = true;
+//        sendToServer("BET|" + myName + "|" + amount + "|" + multiplier);
+//    }
     public void placeBet(int amount, int multiplier) {
-        this.pendingBetAmount     = amount;
-        this.pendingBetMultiplier = multiplier;
-        this.hasBet               = true;
+        try {
+            localPlayer.setBet(amount, multiplier);
+        } catch (InvalidBetException e) {
+            JOptionPane.showMessageDialog(this, "Invalid bet: " + e.getMessage());
+            return;
+        }
         sendToServer("BET|" + myName + "|" + amount + "|" + multiplier);
     }
-
-    /** Called by BetPanel "Skip Bet" or when bet timer expires, so host still advances. */
+ 
+    /** Called by BetPanel after bet is placed or skipped, so host advances. */
     public void betDone(int nextQuestionIndex) {
         if (isHost) {
             server.broadcast("QUESTION|" + nextQuestionIndex);
         }
     }
 
-    // ── MessageListener ───────────────────────────────────────────────────
+
+    //MessageListener 
     @Override
     public void onMessageReceived(String message) {
         SwingUtilities.invokeLater(() -> handleServerMessage(message));
@@ -255,17 +340,19 @@ public class MainWindow extends JFrame implements MessageListener {
 
         } else if (message.startsWith("BET_ROUND|")) {
             int nextIdx = Integer.parseInt(message.substring("BET_ROUND|".length()).trim());
-            betPanel.startBetRound(myScore, nextIdx);
+            betPanel.startBetRound(localPlayer.getScore(), nextIdx);
             showScreen(SCREEN_BET);
 
         } else if (message.startsWith("SCORE_UPDATE|")) {
-            // e.g. SCORE_UPDATE|Alice|1340
-            String[] parts = message.split("\\|");
-            if (parts.length == 3) {
-                String name  = parts[1];
-                int    score = Integer.parseInt(parts[2]);
-                playerScores.put(name, score);
-            }
+//            // e.g. SCORE_UPDATE|Alice|1340
+//            String[] parts = message.split("\\|");
+//            if (parts.length == 3) {
+//                String name  = parts[1];
+//                int    score = Integer.parseInt(parts[2]);
+//                playerScores.put(name, score);
+//            }
+        	// Server re-broadcasts this; no client-side score map needed anymore
+            // (LeaderboardPanel gets its data from the LEADERBOARD message)
 
         } else if (message.startsWith("LEADERBOARD|")) {
             String csv = message.substring("LEADERBOARD|".length());
@@ -285,7 +372,7 @@ public class MainWindow extends JFrame implements MessageListener {
         }
     }
 
-    // ── Utility ────────────────────────────────────────────────────────────
+    //  Utility 
     private void sendToServer(String msg) {
         if (client != null) {
             try { client.send(msg); }
@@ -294,10 +381,11 @@ public class MainWindow extends JFrame implements MessageListener {
     }
 
     public String getMyName()  { return myName; }
-    public int    getMyScore() { return myScore; }
+    //SCORE READ FROM THE BACKEND PLAYER OBJECT
+    public int    getMyScore() { return localPlayer != null ? localPlayer.getScore() : 0; }
     public boolean isHost()    { return isHost; }
 
-    // ── Entry point ────────────────────────────────────────────────────────
+    //Entry point 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
     }
