@@ -23,3 +23,18 @@ maybe start linking the UI - atleast with the questions
 figure out the timer
 
 !! the server class
+
+June 3rd
+Networking added - UI files modified
+
+GAME SESSION - NEXTEVENT - added
+ui logics moved to backend logics - connected
+quiz server - stopped host joining as a player
+- UI backend connection mostly done - comments added
+
+--to do
+-  maybe displaying leader board after everyone round or before bet round
+- bet calculation may not be fully correct- seems to show mistake
+- host page - redo - different screen display? during the game
+
+
