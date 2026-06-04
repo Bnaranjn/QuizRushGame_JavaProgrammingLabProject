@@ -3,108 +3,93 @@ package ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.List;
 
-/**
- * LobbyPanel: Host sees this after opening the lobby.
- * Players are added dynamically via setPlayerList() driven by PLAYER_LIST network messages.
- */
 public class LobbyPanel extends JPanel {
     private final MainWindow window;
-    private final JPanel playerListPanel;
-    private final JLabel countLabel;
+    private final DefaultListModel<String> listModel;
+    private final JButton startBtn;
+    private final JLabel lobbyCodeLabel;
 
-    public LobbyPanel(MainWindow window, int pin) {
+    private static final Color BG = new Color(24, 28, 48);
+    private static final Color TEXT_COLOR = Color.WHITE;
+
+    public LobbyPanel(MainWindow window, int port) {
         this.window = window;
+        this.listModel = new DefaultListModel<>();
+
         setLayout(new BorderLayout());
-        setBackground(new Color(24, 28, 48));
+        setBackground(BG);
+        setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JPanel center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.setBackground(new Color(24, 28, 48));
-        center.setBorder(new EmptyBorder(50, 60, 50, 60));
+        // Header Panel
+        JPanel headerPanel = new JPanel(new GridLayout(2, 1));
+        headerPanel.setBackground(BG);
 
-        JLabel title = new JLabel("QuizRush - Lobby");
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Arial", Font.BOLD, 32));
-        title.setForeground(Color.WHITE);
+        JLabel titleLabel = new JLabel("GAME LOBBY", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        titleLabel.setForeground(TEXT_COLOR);
+        headerPanel.add(titleLabel);
 
-        JLabel pinTitle = new JLabel("Room PIN");
-        pinTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        pinTitle.setFont(new Font("Arial", Font.BOLD, 15));
-        pinTitle.setForeground(new Color(180, 180, 200));
+        lobbyCodeLabel = new JLabel("Lobby Room Port: " + port, SwingConstants.CENTER);
+        lobbyCodeLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        lobbyCodeLabel.setForeground(new Color(150, 160, 200));
+        headerPanel.add(lobbyCodeLabel);
 
-        JLabel pinLabel = new JLabel(String.valueOf(pin));
-        pinLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        pinLabel.setFont(new Font("Arial", Font.BOLD, 44));
-        pinLabel.setForeground(new Color(255, 215, 0));
+        add(headerPanel, BorderLayout.NORTH);
 
-        countLabel = new JLabel("0 player(s) joined");
-        countLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        countLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        countLabel.setForeground(new Color(150, 200, 150));
+        // Player List View
+        JList<String> playerList = new JList<>(listModel);
+        playerList.setBackground(new Color(36, 42, 73));
+        playerList.setForeground(TEXT_COLOR);
+        playerList.setFont(new Font("Arial", Font.PLAIN, 18));
+        playerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(playerList);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(50, 60, 100)));
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Player chip area
-        playerListPanel = new JPanel();
-        playerListPanel.setLayout(new BoxLayout(playerListPanel, BoxLayout.Y_AXIS));
-        playerListPanel.setBackground(new Color(24, 28, 48));
-        playerListPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Action Footer Controls
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(BG);
+        footerPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
-        JScrollPane scroll = new JScrollPane(playerListPanel);
-        scroll.setBackground(new Color(24, 28, 48));
-        scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.setPreferredSize(new Dimension(360, 160));
-        scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
-        scroll.getViewport().setBackground(new Color(24, 28, 48));
-
-        JButton startBtn = new JButton("Start Quiz");
-        startBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        startBtn = new JButton("Start Quiz");
         startBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        startBtn.setBackground(new Color(90, 120, 255));
+        startBtn.setBackground(new Color(40, 167, 69));
         startBtn.setForeground(Color.WHITE);
         startBtn.setFocusPainted(false);
-        startBtn.setBorder(new EmptyBorder(12, 40, 12, 40));
-        startBtn.setMaximumSize(new Dimension(260, 52));
-        startBtn.addActionListener(e -> window.startQuizForEveryone());
+        startBtn.setPreferredSize(new Dimension(0, 50));
+        
+        // Dynamic file prompt requested by the user
+        startBtn.addActionListener(e -> {
+            String fileName = JOptionPane.showInputDialog(
+                window, 
+                "Enter the name of your quiz source file (e.g., quiz.txt):", 
+                "Load Quiz Configuration", 
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (fileName != null && !fileName.trim().isEmpty()) {
+                window.hostLoadAndStartQuiz(fileName.trim());
+            }
+        });
 
-        center.add(title);
-        center.add(Box.createRigidArea(new Dimension(0, 20)));
-        center.add(pinTitle);
-        center.add(Box.createRigidArea(new Dimension(0, 4)));
-        center.add(pinLabel);
-        center.add(Box.createRigidArea(new Dimension(0, 6)));
-        center.add(countLabel);
-        center.add(Box.createRigidArea(new Dimension(0, 20)));
-        center.add(scroll);
-        center.add(Box.createRigidArea(new Dimension(0, 24)));
-        center.add(startBtn);
-
-        add(center, BorderLayout.CENTER);
+        footerPanel.add(startBtn, BorderLayout.CENTER);
+        add(footerPanel, BorderLayout.SOUTH);
     }
 
-    /** Called from MainWindow when PLAYER_LIST message arrives. */
-    public void setPlayerList(String[] names) {
+    /** Called from MainWindow when a PLAYER_LIST packet updates the roster */
+    public void updatePlayerList(List<String> players) {
         SwingUtilities.invokeLater(() -> {
-            playerListPanel.removeAll();
-            Color[] chipColors = {
-                new Color(100, 220, 150),
-                new Color(100, 180, 255),
-                new Color(255, 180, 100),
-                new Color(220, 120, 200),
-                new Color(120, 220, 220)
-            };
-            int ci = 0;
-            for (String name : names) {
-                JLabel chip = new JLabel(">> " + name);
-                chip.setForeground(chipColors[ci % chipColors.length]);
-                chip.setFont(new Font("Arial", Font.BOLD, 16));
-                chip.setAlignmentX(Component.CENTER_ALIGNMENT);
-                playerListPanel.add(chip);
-                playerListPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-                ci++;
+            listModel.clear();
+            for (String p : players) {
+                listModel.addElement(p);
             }
-            countLabel.setText(names.length + " player(s) joined");
-            playerListPanel.revalidate();
-            playerListPanel.repaint();
         });
+    }
+
+    /** Updates visibility based on whether this running instance is the host */
+    public void setHostControls(boolean isHost) {
+        SwingUtilities.invokeLater(() -> startBtn.setVisible(isHost));
     }
 }

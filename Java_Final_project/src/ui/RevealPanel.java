@@ -3,152 +3,86 @@ package ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Map;
 
-/**
- * RevealPanel: Shown after a question. Highlights the correct answer,
- * shows if player was right or wrong, and counts down to the next screen.
- */
 public class RevealPanel extends JPanel {
     private final MainWindow window;
-    private javax.swing.Timer countdownTimer;
+    private final JLabel correctOptionLabel;
+    private final JTextArea scoreboardArea;
+    private final JButton nextBtn;
 
-    private final JLabel resultLabel;
-    private final JLabel pointsLabel;
-    private final JLabel correctAnsLabel;
-    private final JButton[] optionBtns = new JButton[4];
-    private final JLabel nextLabel;
-
-    private static final Color BG      = new Color(24, 28, 48);
-    private static final Color GOLD    = new Color(250, 199, 117);
-    private static final Color MUTED   = new Color(107, 114, 153);
-    private static final Color GREEN   = new Color(39, 174, 96);
-    private static final Color RED     = new Color(231, 76, 60);
-    private static final Color TEXT    = Color.WHITE;
-    private static final Color CARD_BG = new Color(30, 35, 64);
+    private static final Color BG = new Color(24, 28, 48);
+    private static final Color TEXT_COLOR = Color.WHITE;
 
     public RevealPanel(MainWindow window) {
         this.window = window;
-        setBackground(BG);
         setLayout(new BorderLayout());
-        setBorder(new EmptyBorder(36, 44, 36, 44));
+        setBackground(BG);
+        setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JPanel center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.setBackground(BG);
+        // Section Title View
+        JLabel titleLabel = new JLabel("ROUND RESULTS", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 26));
+        titleLabel.setForeground(new Color(46, 204, 113));
+        add(titleLabel, BorderLayout.NORTH);
 
-        resultLabel = new JLabel("Correct!");
-        resultLabel.setFont(new Font("Arial", Font.BOLD, 34));
-        resultLabel.setForeground(GREEN);
-        resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Central Layout for displaying Metrics & Leaderboards
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
+        centerPanel.setBackground(BG);
 
-        pointsLabel = new JLabel("+0 pts");
-        pointsLabel.setFont(new Font("Arial", Font.BOLD, 22));
-        pointsLabel.setForeground(GOLD);
-        pointsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        correctOptionLabel = new JLabel("Correct Option Index: -", SwingConstants.CENTER);
+        correctOptionLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        correctOptionLabel.setForeground(new Color(241, 196, 15));
+        centerPanel.add(correctOptionLabel, BorderLayout.NORTH);
 
-        correctAnsLabel = new JLabel("Correct answer: ");
-        correctAnsLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        correctAnsLabel.setForeground(MUTED);
-        correctAnsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        scoreboardArea = new JTextArea();
+        scoreboardArea.setEditable(false);
+        scoreboardArea.setBackground(new Color(36, 42, 73));
+        scoreboardArea.setForeground(TEXT_COLOR);
+        scoreboardArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        scoreboardArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JScrollPane scroll = new JScrollPane(scoreboardArea);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(50, 60, 100)));
+        centerPanel.add(scroll, BorderLayout.CENTER);
 
-        JPanel optionsPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        optionsPanel.setBackground(BG);
-        optionsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
-        String[] letters = {"A", "B", "C", "D"};
-        for (int i = 0; i < 4; i++) {
-            optionBtns[i] = new JButton(letters[i]);
-            optionBtns[i].setFont(new Font("Arial", Font.BOLD, 14));
-            optionBtns[i].setForeground(TEXT);
-            optionBtns[i].setFocusPainted(false);
-            optionBtns[i].setBorderPainted(false);
-            optionBtns[i].setEnabled(false);
-            optionsPanel.add(optionBtns[i]);
-        }
+        add(centerPanel, BorderLayout.CENTER);
 
-        nextLabel = new JLabel("Next in 3...");
-        nextLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        nextLabel.setForeground(MUTED);
-        nextLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Admin Flow Progression Controller
+        nextBtn = new JButton("Advance Phase");
+        nextBtn.setFont(new Font("Arial", Font.BOLD, 18));
+        nextBtn.setBackground(new Color(52, 152, 219));
+        nextBtn.setForeground(Color.WHITE);
+        nextBtn.setFocusPainted(false);
+        
+        // Tells server to evaluate what screen state follows next (Question vs Bet vs Podium)
+        nextBtn.addActionListener(e -> window.hostRequestsNextPhase());
 
-        center.add(resultLabel);
-        center.add(Box.createRigidArea(new Dimension(0, 8)));
-        center.add(pointsLabel);
-        center.add(Box.createRigidArea(new Dimension(0, 20)));
-        center.add(correctAnsLabel);
-        center.add(Box.createRigidArea(new Dimension(0, 14)));
-        center.add(optionsPanel);
-        center.add(Box.createRigidArea(new Dimension(0, 28)));
-        center.add(nextLabel);
-
-        add(center, BorderLayout.CENTER);
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(BG);
+        footerPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
+        footerPanel.add(nextBtn, BorderLayout.CENTER);
+        add(footerPanel, BorderLayout.SOUTH);
     }
 
-    public void showResult(int selectedAnswer, int correctAnswer,
-                           String[] options, int pointsEarned, boolean correct) {
-        boolean noAnswer = (selectedAnswer == -1);
-
-        if (noAnswer) {
-            resultLabel.setText("Time's up!");
-            resultLabel.setForeground(MUTED);
-        } else if (correct) {
-            resultLabel.setText("Correct!");
-            resultLabel.setForeground(GREEN);
-        } else {
-            resultLabel.setText("Wrong!");
-            resultLabel.setForeground(RED);
-        }
-
-        pointsLabel.setText((pointsEarned >= 0 ? "+" : "") + pointsEarned + " pts");
-        correctAnsLabel.setText("Correct answer: " + "ABCD".charAt(correctAnswer)
-                                + "  " + options[correctAnswer]);
-
-        // Color the option buttons
-        Color[] dimmed = {
-            new Color(140, 50, 30),
-            new Color(30, 80, 130),
-            new Color(140, 100, 0),
-            new Color(30, 100, 40)
-        };
-        for (int i = 0; i < 4; i++) {
-            String txt = "<html><center><b>" + "ABCD".charAt(i) + "</b>  "
-                         + options[i] + "</center></html>";
-            optionBtns[i].setText(txt);
-            if (i == correctAnswer) {
-                optionBtns[i].setBackground(new Color(39, 174, 96));
-                optionBtns[i].setBorder(
-                    BorderFactory.createLineBorder(Color.WHITE, 2));
-            } else if (i == selectedAnswer) {
-                optionBtns[i].setBackground(new Color(192, 57, 43));
-                optionBtns[i].setBorder(BorderFactory.createEmptyBorder());
-            } else {
-                optionBtns[i].setBackground(dimmed[i]);
-                optionBtns[i].setBorder(BorderFactory.createEmptyBorder());
+    /** Called from MainWindow when processing the REVEAL command packet string */
+    public void showResults(int correctIndex, Map<String, Integer> currentStandings, String myName, boolean isHost) {
+        SwingUtilities.invokeLater(() -> {
+            // Only reveal the Next navigation control to the host administrator
+            nextBtn.setVisible(isHost);
+            
+            correctOptionLabel.setText("Correct Choice Option Index: " + correctIndex);
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%-20s | %-10s\n", "PLAYER NAME", "TOTAL SCORE"));
+            sb.append("-------------------------------------------\n");
+            
+            for (Map.Entry<String, Integer> entry : currentStandings.entrySet()) {
+                String marker = entry.getKey().equals(myName) ? " (You)" : "";
+                sb.append(String.format("%-20s | %-10d pts\n", entry.getKey() + marker, entry.getValue()));
             }
-        }
-
-        startCountdown();
-    }
-
-    private void startCountdown() {
-        if (countdownTimer != null) countdownTimer.stop();
-        final int[] count = {3};
-        nextLabel.setText("Next in 3...");
-
-        countdownTimer = new javax.swing.Timer(1000, e -> {
-            count[0]--;
-            if (count[0] <= 0) {
-                countdownTimer.stop();
-                window.goToNextScreen();
-            } else {
-                nextLabel.setText("Next in " + count[0] + "...");
-            }
+            
+            scoreboardArea.setText(sb.toString());
         });
-        countdownTimer.start();
-    }
-
-    public void stopCountdown() {
-        if (countdownTimer != null && countdownTimer.isRunning()) {
-            countdownTimer.stop();
-        }
     }
 }

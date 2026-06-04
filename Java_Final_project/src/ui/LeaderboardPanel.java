@@ -6,113 +6,79 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * LeaderboardPanel: Final screen showing player rankings.
- * Fixed: showLeaderboard() populates from real game scores (via LEADERBOARD network message),
- * instead of hardcoded sample data.
- */
 public class LeaderboardPanel extends JPanel {
-    private final MainWindow window;
-    private final JPanel listPanel;
-    private final JLabel titleLabel;
+    private final JPanel layoutListContainer;
 
     public LeaderboardPanel(MainWindow window) {
-        this.window = window;
         setLayout(new BorderLayout());
         setBackground(new Color(18, 18, 30));
 
-        // Title
-        titleLabel = new JLabel("Final Leaderboard", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setBorder(new EmptyBorder(28, 10, 16, 10));
-        add(titleLabel, BorderLayout.NORTH);
+        JLabel bannerTitle = new JLabel("CHAMPIONSHIP PODIUM", SwingConstants.CENTER);
+        bannerTitle.setFont(new Font("Arial", Font.BOLD, 28));
+        bannerTitle.setForeground(new Color(241, 196, 15));
+        bannerTitle.setBorder(new EmptyBorder(25, 10, 20, 10));
+        add(bannerTitle, BorderLayout.NORTH);
 
-        // Scrollable list
-        listPanel = new JPanel();
-        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-        listPanel.setBackground(new Color(18, 18, 30));
-        listPanel.setBorder(new EmptyBorder(10, 30, 10, 30));
+        layoutListContainer = new JPanel();
+        layoutListContainer.setLayout(new BoxLayout(layoutListContainer, BoxLayout.Y_AXIS));
+        layoutListContainer.setBackground(new Color(18, 18, 30));
 
-        JScrollPane scroll = new JScrollPane(listPanel);
-        scroll.setBackground(new Color(18, 18, 30));
-        scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getViewport().setBackground(new Color(18, 18, 30));
-        add(scroll, BorderLayout.CENTER);
+        JScrollPane innerScrollArea = new JScrollPane(layoutListContainer);
+        innerScrollArea.setBorder(BorderFactory.createEmptyBorder());
+        innerScrollArea.getViewport().setBackground(new Color(18, 18, 30));
+        add(innerScrollArea, BorderLayout.CENTER);
 
-        // Play Again / Close button
-        JButton closeBtn = new JButton("Close Game");
-        closeBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        closeBtn.setBackground(new Color(90, 120, 255));
-        closeBtn.setForeground(Color.WHITE);
-        closeBtn.setFocusPainted(false);
-        closeBtn.setBorder(new EmptyBorder(14, 30, 14, 30));
-        closeBtn.addActionListener(e -> System.exit(0));
+        JButton finalizeExitBtn = new JButton("Close Session Workspace");
+        finalizeExitBtn.setFont(new Font("Arial", Font.BOLD, 16));
+        finalizeExitBtn.setBackground(new Color(192, 41, 43));
+        finalizeExitBtn.setForeground(Color.WHITE);
+        finalizeExitBtn.addActionListener(e -> System.exit(0));
 
-        JPanel bottom = new JPanel();
-        bottom.setBackground(new Color(18, 18, 30));
-        bottom.setBorder(new EmptyBorder(16, 20, 24, 20));
-        bottom.add(closeBtn);
-        add(bottom, BorderLayout.SOUTH);
+        JPanel panelWrap = new JPanel();
+        panelWrap.setBackground(new Color(18, 18, 30));
+        panelWrap.setBorder(new EmptyBorder(15, 10, 15, 10));
+        panelWrap.add(finalizeExitBtn);
+        add(panelWrap, BorderLayout.SOUTH);
     }
 
-    /**
-     * Populates the leaderboard from real game data.
-     * @param scores  map of name → score (should be in insertion order, already sorted by caller)
-     * @param myName  this player's name, highlighted differently
-     */
-    public void showLeaderboard(Map<String, Integer> scores, String myName) {
+    public void displayFinalStandings(Map<String, Integer> mapScores, String trackingSelfIdent) {
         SwingUtilities.invokeLater(() -> {
-            listPanel.removeAll();
+            layoutListContainer.removeAll();
 
-            // Sort descending by score
-            List<Map.Entry<String, Integer>> sorted = new ArrayList<>(scores.entrySet());
-            sorted.sort((a, b) -> b.getValue() - a.getValue());
+            List<Map.Entry<String, Integer>> standingsList = new ArrayList<>(mapScores.entrySet());
+            standingsList.sort((r1, r2) -> r2.getValue().compareTo(r1.getValue()));
 
-            String[] medals = {"1st", "2nd", "3rd"};
-            int rank = 1;
-            for (Map.Entry<String, Integer> entry : sorted) {
-                String  name  = entry.getKey();
-                int     score = entry.getValue();
-                boolean isMe  = name.equals(myName);
-                addRow(rank, name, score, isMe, medals);
-                rank++;
+            int operationalRank = 1;
+            for (Map.Entry<String, Integer> rowNode : standingsList) {
+                JPanel rowCard = new JPanel(new BorderLayout());
+                rowCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 55));
+                boolean matchingIdent = rowNode.getKey().equals(trackingSelfIdent);
+
+                rowCard.setBackground(matchingIdent ? new Color(41, 128, 185) : new Color(34, 41, 68));
+                rowCard.setBorder(new EmptyBorder(10, 20, 10, 20));
+
+                JLabel positionLabel = new JLabel("#" + operationalRank + "  ");
+                positionLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
+                positionLabel.setForeground(operationalRank == 1 ? new Color(241, 196, 15) : Color.WHITE);
+
+                JLabel handleLabel = new JLabel(rowNode.getKey() + (matchingIdent ? " (You)" : ""));
+                handleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+                handleLabel.setForeground(Color.WHITE);
+
+                JLabel totalValueLabel = new JLabel(rowNode.getValue() + " pts");
+                totalValueLabel.setFont(new Font("Arial", Font.BOLD, 16));
+                totalValueLabel.setForeground(new Color(46, 204, 113));
+
+                rowCard.add(positionLabel, BorderLayout.WEST);
+                rowCard.add(handleLabel, BorderLayout.CENTER);
+                rowCard.add(totalValueLabel, BorderLayout.EAST);
+
+                layoutListContainer.add(rowCard);
+                layoutListContainer.add(Box.createRigidArea(new Dimension(0, 8)));
+                operationalRank++;
             }
-            listPanel.revalidate();
-            listPanel.repaint();
+            layoutListContainer.revalidate();
+            layoutListContainer.repaint();
         });
-    }
-
-    private void addRow(int rank, String name, int score, boolean isMe, String[] medals) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 66));
-
-        Color rowBg = isMe
-            ? new Color(40, 60, 100)    // highlight "you"
-            : new Color(30, 30, 50);
-        row.setBackground(rowBg);
-        row.setBorder(new EmptyBorder(14, 18, 14, 18));
-
-        String rankText = (rank <= 3) ? medals[rank - 1] : "#" + rank;
-        JLabel rankLbl = new JLabel(rankText);
-        rankLbl.setFont(new Font("Arial", Font.BOLD, 22));
-        rankLbl.setForeground(rank == 1 ? new Color(255, 215, 0) : Color.WHITE);
-        rankLbl.setPreferredSize(new Dimension(50, 30));
-
-        JLabel nameLbl = new JLabel(name + (isMe ? " (you)" : ""));
-        nameLbl.setForeground(Color.WHITE);
-        nameLbl.setFont(new Font("Arial", Font.BOLD, isMe ? 20 : 18));
-
-        JLabel scoreLbl = new JLabel(score + " pts");
-        scoreLbl.setForeground(new Color(255, 215, 0));
-        scoreLbl.setFont(new Font("Arial", Font.BOLD, 18));
-        scoreLbl.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        row.add(rankLbl,  BorderLayout.WEST);
-        row.add(nameLbl,  BorderLayout.CENTER);
-        row.add(scoreLbl, BorderLayout.EAST);
-
-        listPanel.add(row);
-        listPanel.add(Box.createRigidArea(new Dimension(0, 10)));
     }
 }

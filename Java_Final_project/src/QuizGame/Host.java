@@ -8,7 +8,7 @@ public class Host extends User {
         super(name);
     }
 
-    public void addQuestion(Quiz quiz, Question q) {
-        quiz.addQuestion(q);
-    }
+//    public void addQuestion(Quiz quiz, Question q) {
+//        quiz.addQuestion(q);
+//    }
 }

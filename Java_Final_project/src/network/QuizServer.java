@@ -1,118 +1,186 @@
 package network;
 
-import java.net.*;
-import java.io.*;
+import QuizGame.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * QuizServer: Accepts incoming client connections and handles broadcasting.
- * Fixed: clients stored in a synchronized list, sender excluded from echo,
- * player JOIN messages parsed and re-broadcast as PLAYER_LIST updates.
- */
 public class QuizServer {
     private ServerSocket serverSocket;
-    private final List<ClientHandler> clients = Collections.synchronizedList(new ArrayList<>());
-    private final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
-
-    //added by nj - used for leaderboard broadcast
-    private final Map<String, Integer> playerScores = Collections.synchronizedMap(new LinkedHashMap<>());
-    //server startup
+    private Thread acceptThread;
+    private final List<ClientHandler> clients = new CopyOnWriteArrayList<>();
+    private final Map<String, Player> playerRoster = new ConcurrentHashMap<>();
     
+    private Quiz activeQuiz;
+    private int currentQuestionIdx = -1;
+    private int questionsAnsweredCount = 0;
+    private int betsPlacedCount = 0;
+
     public void startServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
-        System.out.println("Server started on port " + port);
-        new Thread(() -> {
-            while (true) {
+        acceptThread = new Thread(() -> {
+            while (!serverSocket.isClosed()) {
                 try {
                     Socket socket = serverSocket.accept();
-                    ClientHandler client = new ClientHandler(socket, this);
-                    clients.add(client);
-                    client.start();
-                    System.out.println("New client connected. Total: " + clients.size());
-                } catch (Exception e) {
-                    if (!serverSocket.isClosed()) e.printStackTrace();
+                    ClientHandler handler = new ClientHandler(socket, this);
+                    clients.add(handler);
+                    handler.start();
+                } catch (IOException e) {
                     break;
                 }
             }
-        }, "ServerAcceptThread").start();
+        });
+        acceptThread.setDaemon(true);
+        acceptThread.start();
     }
 
-    /**
-     * Called by ClientHandler when a message arrives from a client.
-     * Parses protocol messages and decides what to broadcast.
-     */
-    public void handleMessage(String message, ClientHandler sender) {
-        System.out.println("Server received: " + message);
+    public synchronized void handleMessage(String message, ClientHandler sender) {
+        String[] tokens = message.split("\\|");
+        String command = tokens[0];
 
-        if (message.startsWith("JOIN|")) {
-        	//modified by nj = excluding the host 
-            String name = message.substring(5).trim();
-            
-            if (!name.contentEquals("Host")&&!playerNames.contains(name)) {
-                playerNames.add(name);
-                playerScores.put(name, 0);//initalizing the score
-            }
-            // Broadcast updated player list to everyone
-            broadcastPlayerList();
+        switch (command) {
+            case "JOIN":
+                String joinName = tokens[1];
+                if (!playerRoster.containsKey(joinName)) {
+                    playerRoster.put(joinName, new Player(joinName));
+                }
+                broadcastPlayerRoster();
+                break;
 
-            //else if function added here for score update
-        } else if (message.startsWith("SCORE_UPDATE|")) {
-            // Format: SCORE_UPDATE|<name>|<score>
-            String[] parts = message.split("\\|");
-            if (parts.length == 3) {
-                try {
-                    String name  = parts[1];
-                    int    score = Integer.parseInt(parts[2]);
-                    playerScores.put(name, score);   //server manages the score
-                    System.out.println("Score recorded: " + name + " = " + score);
-                } catch (NumberFormatException ignored) {}
-            }
-            // Also broadcast so every client's UI can show live score updates
-            broadcast(message);
-        } else {
-            // All other messages (START_GAME, QUESTION|..., TIMER_SYNC|..., etc.)
-            // broadcast to ALL clients including the host's own client if connected
-            broadcast(message);
+            case "START_GAME":
+                // Server initializes quiz model from source text descriptor path safely
+                String targetFile = tokens.length > 1 ? tokens[1] : "quiz.txt";
+                activeQuiz = new Quiz();
+                activeQuiz.loadQuizFromFile(targetFile);
+                
+                // Zero out scores across tracking profiles
+                for (Player p : playerRoster.values()) {
+                    p.setScore(0);
+                }
+                
+                broadcast("START_GAME");
+                advanceToNextQuestion();
+                break;
+
+            case "ANSWER":
+                String answeringPlayer = tokens[1];
+                int answerIndex = Integer.parseInt(tokens[2]);
+                int elapsedBonus = Integer.parseInt(tokens[3]);
+
+                Player pAnswer = playerRoster.get(answeringPlayer);
+                if (pAnswer != null) {
+                    pAnswer.setSelectedAnswer(answerIndex);
+                    pAnswer.setAnswerTimeLeft(elapsedBonus);
+                }
+
+                questionsAnsweredCount++;
+                if (questionsAnsweredCount >= playerRoster.size()) {
+                    evaluateRoundAnswers();
+                }
+                break;
+
+            case "BET":
+                String bettingPlayer = tokens[1];
+                int wagerAmount = Integer.parseInt(tokens[2]);
+                int multValue = Integer.parseInt(tokens[3]);
+
+                Player pBet = playerRoster.get(bettingPlayer);
+                if (pBet != null) {
+                    pBet.placeBet(wagerAmount, multValue);
+                }
+
+                betsPlacedCount++;
+                if (betsPlacedCount >= playerRoster.size()) {
+                    betsPlacedCount = 0;
+                    advanceToNextQuestion();
+                }
+                break;
+
+            case "REQUEST_NEXT_PHASE":
+                // Triggered by host on RevealPanel to progress flow sequence safely
+                int totalCount = activeQuiz.getTotalQuestions();
+                GameSession.NextEvent event = GameSession.getNextEvent(currentQuestionIdx, totalCount);
+
+                if (event == GameSession.NextEvent.BET_ROUND) {
+                    broadcastBetRoundPhase();
+                } else if (event == GameSession.NextEvent.NEXT_QUESTION) {
+                    advanceToNextQuestion();
+                } else {
+                    broadcastFinalLeaderboard();
+                }
+                break;
         }
     }
 
-    //added by nj - leaderboard build
-    public void broadcastLeaderboard() {
-        StringBuilder sb = new StringBuilder();
-        synchronized (playerScores) {
-            playerScores.forEach((name, score) ->
-                sb.append(name).append(":").append(score).append(","));
-        }
-        if (sb.length() > 0) sb.setLength(sb.length() - 1);   // trim trailing comma
-        broadcast("LEADERBOARD|" + sb);
-        broadcast("GAME_OVER");
-    }
-    
-    /** Sends the current player list to all clients. */
-    private void broadcastPlayerList() {
-        String joined = String.join(",", playerNames);
-        broadcast("PLAYER_LIST|" + joined);
+    private void advanceToNextQuestion() {
+        currentQuestionIdx++;
+        questionsAnsweredCount = 0;
+        Question q = activeQuiz.getQuestionAt(currentQuestionIdx);
+        
+        // Structure: QUESTION|index|questionText|opt1|opt2|opt3|opt4
+        broadcast("QUESTION|" + currentQuestionIdx + "|" + q.getQuestionText() + "|" +
+                q.getOption(0) + "|" + q.getOption(1) + "|" + q.getOption(2) + "|" + q.getOption(3));
     }
 
-    /** Sends a message to every connected client. */
+    private void evaluateRoundAnswers() {
+        Question q = activeQuiz.getQuestionAt(currentQuestionIdx);
+        int correctIdx = q.getCorrectOptionIndex();
+
+        for (Player p : playerRoster.values()) {
+            boolean isCorrect = (p.getSelectedAnswer() == correctIdx);
+            p.resolveAnswer(isCorrect, p.getAnswerTimeLeft());
+            p.resetAnswer(); // Clean input states for upcoming rounds
+        }
+
+        // Build standings string payload: REVEAL|correctIdx|name1:score1,name2:score2...
+        StringBuilder sb = new StringBuilder("REVEAL|").append(correctIdx).append("|");
+        for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
+        }
+        broadcast(sb.toString());
+    }
+
+    private void broadcastBetRoundPhase() {
+        // Structure: BET_ROUND|nextQuestionIndex|name1:score1,name2:score2...
+        StringBuilder sb = new StringBuilder("BET_ROUND|").append(currentQuestionIdx + 1).append("|");
+        for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
+        }
+        broadcast(sb.toString());
+    }
+
+    private void broadcastFinalLeaderboard() {
+        StringBuilder sb = new StringBuilder("GAME_OVER|");
+        for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
+        }
+        broadcast(sb.toString());
+    }
+
+    private void broadcastPlayerRoster() {
+        StringBuilder sb = new StringBuilder("PLAYER_LIST|");
+        for (String name : playerRoster.keySet()) {
+            sb.append(name).append(",");
+        }
+        broadcast(sb.toString());
+    }
+
     public void broadcast(String message) {
-        synchronized (clients) {
-            for (ClientHandler c : clients) {
-                c.send(message);
-            }
+        for (ClientHandler client : clients) {
+            client.send(message);
         }
     }
 
-    public void removeClient(ClientHandler client) {
+    public synchronized void removeClient(ClientHandler client) {
         clients.remove(client);
-        System.out.println("Client disconnected. Remaining: " + clients.size());
     }
 
     public void stopServer() {
         try {
             if (serverSocket != null) serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException ignored) {}
     }
 }

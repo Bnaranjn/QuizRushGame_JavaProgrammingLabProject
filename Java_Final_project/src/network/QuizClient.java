@@ -1,46 +1,47 @@
 package network;
 
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 
-/**
- * QuizClient: Connects to the QuizServer and sends/receives messages.
- */
 public class QuizClient {
-    private final Socket socket;
-    private final DataInputStream in;
-    private final DataOutputStream out;
+    private Socket socket;
+    private DataInputStream in;
+    private DataOutputStream out;
+    private Thread readThread;
     private final MessageListener listener;
 
-    public QuizClient(String ip, int port, MessageListener listener) throws IOException {
+    public QuizClient(String host, int port, MessageListener listener) throws IOException {
         this.listener = listener;
-        socket = new Socket(ip, port);
-        in  = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-        out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        startListening();
-    }
+        this.socket = new Socket(host, port);
+        this.in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+        this.out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
-    private void startListening() {
-        Thread t = new Thread(() -> {
-            try {
-                while (true) {
+        readThread = new Thread(() -> {
+            while (!socket.isClosed()) {
+                try {
                     String message = in.readUTF();
                     listener.onMessageReceived(message);
+                } catch (IOException e) {
+                    break;
                 }
-            } catch (Exception e) {
-                System.out.println("Disconnected from server.");
             }
-        }, "ClientListenThread");
-        t.setDaemon(true);
-        t.start();
+        });
+        readThread.setDaemon(true);
+        readThread.start();
     }
 
-    public void send(String message) throws IOException {
-        out.writeUTF(message);
-        out.flush();
+    public void send(String message) {
+        try {
+            out.writeUTF(message);
+            out.flush();
+        } catch (IOException e) {
+            System.err.println("Failed to write packet downstream: " + e.getMessage());
+        }
     }
 
-    public void close() {
-        try { socket.close(); } catch (IOException ignored) {}
+    public void disconnect() {
+        try {
+            if (socket != null) socket.close();
+        } catch (IOException ignored) {}
     }
 }

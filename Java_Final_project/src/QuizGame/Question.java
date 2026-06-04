@@ -1,40 +1,32 @@
 package QuizGame;
 
-/**
- * Question: Holds a quiz question, its four options, and the correct answer index.
- */
 public class Question {
-    private final String text;
+    private final String questionText;
     private final String[] options;
-    private final int correctAnswer;
+    private final int correctOptionIndex;
 
-    public Question(String text, String[] options, int correctAnswer) {
-        this.text          = text;
-        this.options       = options;
-        this.correctAnswer = correctAnswer;
-    }
-
-    public boolean isCorrect(int answer) {
-        return this.correctAnswer == answer;
-    }
-
-    public String getText() {
-        return this.text;
-    }
-
-    public String[] getOptionsArr() {
-        return this.options;
-    }
-
-    public int getCorrectAnswer() {
-        return correctAnswer;
-    }
-
-    public String getOptionsFormatted() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < options.length; i++) {
-            sb.append((i + 1)).append(". ").append(options[i]).append("\n");
+    public Question(String questionText, String[] options, int correctOptionIndex) {
+        if (options == null || options.length != 4) {
+            throw new InvalidAnswerException("A question must provide exactly four options.");
         }
-        return sb.toString();
+        this.questionText = questionText;
+        this.options = options;
+        this.correctOptionIndex = correctOptionIndex;
+    }
+
+    public String getQuestionText() {
+        return questionText;
+    }
+
+    public String getOption(int index) {
+        return options[index];
+    }
+
+    public int getCorrectOptionIndex() {
+        return correctOptionIndex;
+    }
+
+    public boolean isCorrect(int index) {
+        return index == correctOptionIndex;
     }
 }
