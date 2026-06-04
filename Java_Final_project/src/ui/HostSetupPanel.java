@@ -6,8 +6,9 @@ import java.awt.*;
 
 public class HostSetupPanel extends JPanel {
     private final MainWindow window;
+    private final JTextField portInputField;
 
-    public HostSetupPanel(MainWindow window, int port) {
+    public HostSetupPanel(MainWindow window, int defaultPort) {
         this.window = window;
         setLayout(new BorderLayout());
         setBackground(new Color(24, 28, 48));
@@ -15,7 +16,7 @@ public class HostSetupPanel extends JPanel {
         JPanel centerContainer = new JPanel();
         centerContainer.setLayout(new BoxLayout(centerContainer, BoxLayout.Y_AXIS));
         centerContainer.setBackground(new Color(24, 28, 48));
-        centerContainer.setBorder(new EmptyBorder(80, 60, 80, 60));
+        centerContainer.setBorder(new EmptyBorder(60, 60, 60, 60));
 
         JLabel title = new JLabel("QuizRush Framework");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -27,13 +28,39 @@ public class HostSetupPanel extends JPanel {
         desc.setFont(new Font("Arial", Font.PLAIN, 14));
         desc.setForeground(new Color(160, 170, 200));
 
-        JLabel portLabel = new JLabel("Target Network Room Port: " + port);
-        portLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        portLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        portLabel.setForeground(new Color(241, 196, 15));
+        // Sub-panel to host the port dynamic typing field
+        JPanel portConfigPanel = new JPanel();
+        portConfigPanel.setLayout(new BoxLayout(portConfigPanel, BoxLayout.Y_AXIS));
+        portConfigPanel.setBackground(new Color(24, 28, 48));
+        portConfigPanel.setMaximumSize(new Dimension(260, 65));
 
+        JLabel portLabel = new JLabel("Set Custom Server Lobby Port:");
+        portLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        portLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        portLabel.setForeground(new Color(241, 196, 15));
+        portConfigPanel.add(portLabel);
+        portConfigPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        portInputField = new JTextField(String.valueOf(defaultPort));
+        portInputField.setFont(new Font("Monospaced", Font.BOLD, 16));
+        portInputField.setHorizontalAlignment(JTextField.CENTER);
+        portInputField.setMaximumSize(new Dimension(200, 35));
+        portConfigPanel.add(portInputField);
+
+        // Operational Actions Configuration
         JButton hostBtn = createStyledButton("Initialize Room Lobby", new Color(40, 167, 69));
-        hostBtn.addActionListener(e -> window.startHosting());
+        hostBtn.addActionListener(e -> {
+            try {
+                int selectedPort = Integer.parseInt(portInputField.getText().trim());
+                if (selectedPort < 1024 || selectedPort > 65535) {
+                    JOptionPane.showMessageDialog(window, "Please enter a valid custom port number between 1024 and 65535.", "Port Bounds Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                window.startHosting(selectedPort);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(window, "Port assignments must be plain numerical values.", "Formatting Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         JButton clientRouteBtn = createStyledButton("Join External Room Server", new Color(52, 152, 219));
         clientRouteBtn.addActionListener(e -> window.showScreen(MainWindow.SCREEN_JOIN));
@@ -41,9 +68,9 @@ public class HostSetupPanel extends JPanel {
         centerContainer.add(title);
         centerContainer.add(Box.createRigidArea(new Dimension(0, 10)));
         centerContainer.add(desc);
-        centerContainer.add(Box.createRigidArea(new Dimension(0, 40)));
-        centerContainer.add(portLabel);
-        centerContainer.add(Box.createRigidArea(new Dimension(0, 40)));
+        centerContainer.add(Box.createRigidArea(new Dimension(0, 45)));
+        centerContainer.add(portConfigPanel);
+        centerContainer.add(Box.createRigidArea(new Dimension(0, 35)));
         centerContainer.add(hostBtn);
         centerContainer.add(Box.createRigidArea(new Dimension(0, 15)));
         centerContainer.add(clientRouteBtn);

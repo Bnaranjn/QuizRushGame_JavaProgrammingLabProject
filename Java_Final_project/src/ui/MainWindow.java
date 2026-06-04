@@ -32,7 +32,9 @@ public class MainWindow extends JFrame implements MessageListener {
     
     private String playerNickname = "Unknown";
     private boolean isHostNode = false;
-    private final int networkActivePort = 5000;
+    
+    // Default starting suggestion value passed down to components
+    private static final int DEFAULT_FALLBACK_PORT = 5000; 
 
     public MainWindow() {
         setTitle("QuizRush Framework Engine");
@@ -40,9 +42,9 @@ public class MainWindow extends JFrame implements MessageListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        setupPanel = new HostSetupPanel(this, networkActivePort);
+        setupPanel = new HostSetupPanel(this, DEFAULT_FALLBACK_PORT);
         joinPanel = new JoinPanel(this);
-        lobbyPanel = new LobbyPanel(this, networkActivePort);
+        lobbyPanel = new LobbyPanel(this);
         waitingPanel = new PlayerWaitingLobbyPanel(this);
         questionPanel = new QuestionPanel(this);
         revealPanel = new RevealPanel(this);
@@ -66,20 +68,23 @@ public class MainWindow extends JFrame implements MessageListener {
         SwingUtilities.invokeLater(() -> cardLayout.show(cardContainer, screenKey));
     }
 
-    public void startHosting() {
+    /** Modified to accept an explicitly configured dynamic port allocation runtime mapping */
+    public void startHosting(int selectedPort) {
         this.isHostNode = true;
         this.playerNickname = "Host";
         try {
             localServerInstance = new QuizServer();
-            localServerInstance.startServer(networkActivePort);
+            localServerInstance.startServer(selectedPort);
 
-            networkClientLink = new QuizClient("localhost", networkActivePort, this);
+            networkClientLink = new QuizClient("localhost", selectedPort, this);
             networkClientLink.send("JOIN|Host");
             
+            // Push active metrics into components before screen transitions take place
+            lobbyPanel.setRoomPortDisplay(selectedPort);
             lobbyPanel.setHostControls(true);
             showScreen(SCREEN_LOBBY);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to initialize server loop binding: " + e.getMessage(), "Server Exception", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Failed to initialize server loop binding on port " + selectedPort + ".\nError: " + e.getMessage(), "Server Bind Exception", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -90,6 +95,7 @@ public class MainWindow extends JFrame implements MessageListener {
             networkClientLink = new QuizClient(ip, port, this);
             networkClientLink.send("JOIN|" + playerNickname);
             
+            lobbyPanel.setRoomPortDisplay(port);
             lobbyPanel.setHostControls(false);
             showScreen(SCREEN_LOBBY);
         } catch (Exception e) {
@@ -104,7 +110,7 @@ public class MainWindow extends JFrame implements MessageListener {
     }
 
     public void submitPlayerAnswer(int chosenIndex, int remainingTimeSeconds) {
-        if (isHostNode) return; // Guard clause
+        if (isHostNode) return;
         if (networkClientLink != null) {
             networkClientLink.send("ANSWER|" + playerNickname + "|" + chosenIndex + "|" + remainingTimeSeconds);
             showScreen(SCREEN_WAITING);
@@ -112,7 +118,7 @@ public class MainWindow extends JFrame implements MessageListener {
     }
 
     public void submitPlayerBet(int pointsWagered, int selectedMultiplier) {
-        if (isHostNode) return; // Guard clause
+        if (isHostNode) return;
         if (networkClientLink != null) {
             networkClientLink.send("BET|" + playerNickname + "|" + pointsWagered + "|" + selectedMultiplier);
             showScreen(SCREEN_WAITING);
@@ -142,7 +148,6 @@ public class MainWindow extends JFrame implements MessageListener {
 
             case "QUESTION":
                 if (isHostNode) {
-                    // Exclude Host: force them into a monitoring wait screen while players race
                     showScreen(SCREEN_WAITING);
                 } else {
                     String qText = parts[2];
@@ -170,7 +175,6 @@ public class MainWindow extends JFrame implements MessageListener {
 
             case "BET_ROUND":
                 if (isHostNode) {
-                    // Exclude Host: keep them on a holding screen while players calculate bets
                     showScreen(SCREEN_WAITING);
                 } else {
                     int targetNextIdx = Integer.parseInt(parts[1]);
@@ -205,7 +209,7 @@ public class MainWindow extends JFrame implements MessageListener {
         return generatedMap;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
+//    }
 }
