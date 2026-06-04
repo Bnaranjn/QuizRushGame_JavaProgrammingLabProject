@@ -104,6 +104,7 @@ public class MainWindow extends JFrame implements MessageListener {
     }
 
     public void submitPlayerAnswer(int chosenIndex, int remainingTimeSeconds) {
+        if (isHostNode) return; // Guard clause
         if (networkClientLink != null) {
             networkClientLink.send("ANSWER|" + playerNickname + "|" + chosenIndex + "|" + remainingTimeSeconds);
             showScreen(SCREEN_WAITING);
@@ -111,6 +112,7 @@ public class MainWindow extends JFrame implements MessageListener {
     }
 
     public void submitPlayerBet(int pointsWagered, int selectedMultiplier) {
+        if (isHostNode) return; // Guard clause
         if (networkClientLink != null) {
             networkClientLink.send("BET|" + playerNickname + "|" + pointsWagered + "|" + selectedMultiplier);
             showScreen(SCREEN_WAITING);
@@ -135,45 +137,51 @@ public class MainWindow extends JFrame implements MessageListener {
                 break;
 
             case "START_GAME":
-                // All clients cleanly sync visual boundaries inside the Event Dispatch Thread
                 showScreen(SCREEN_WAITING);
                 break;
 
             case "QUESTION":
-                // Layout: QUESTION|index|text|a|b|c|d
-                String qText = parts[2];
-                String a = parts[3];
-                String b = parts[4];
-                String c = parts[5];
-                String d = parts[6];
+                if (isHostNode) {
+                    // Exclude Host: force them into a monitoring wait screen while players race
+                    showScreen(SCREEN_WAITING);
+                } else {
+                    String qText = parts[2];
+                    String a = parts[3];
+                    String b = parts[4];
+                    String c = parts[5];
+                    String d = parts[6];
 
-                SwingUtilities.invokeLater(() -> {
-                    questionPanel.setQuestionText(qText);
-                    questionPanel.setOptions(a, b, c, d);
-                    showScreen(SCREEN_QUESTION);
-                    questionPanel.startTimer(20);
-                });
+                    SwingUtilities.invokeLater(() -> {
+                        questionPanel.setQuestionText(qText);
+                        questionPanel.setOptions(a, b, c, d);
+                        showScreen(SCREEN_QUESTION);
+                        questionPanel.startTimer(20);
+                    });
+                }
                 break;
 
             case "REVEAL":
-                // Layout: REVEAL|correctIndex|name1:score1,name2:score2...
                 int correctChoiceIdx = Integer.parseInt(parts[1]);
-                Map<String, Integer> currentScores = parseStandingsMap(parts[2]);
+                Map<String, Integer> currentScores = parseStandingsMap(parts.length > 2 ? parts[2] : "");
 
                 revealPanel.showResults(correctChoiceIdx, currentScores, playerNickname, isHostNode);
                 showScreen(SCREEN_REVEAL);
                 break;
 
             case "BET_ROUND":
-                // Layout: BET_ROUND|nextQuestionIndex|name1:score1,name2:score2...
-                int targetNextIdx = Integer.parseInt(parts[1]);
-                Map<String, Integer> scoresForBet = parseStandingsMap(parts[2]);
-                int selfCurrentScore = scoresForBet.getOrDefault(playerNickname, 0);
+                if (isHostNode) {
+                    // Exclude Host: keep them on a holding screen while players calculate bets
+                    showScreen(SCREEN_WAITING);
+                } else {
+                    int targetNextIdx = Integer.parseInt(parts[1]);
+                    Map<String, Integer> scoresForBet = parseStandingsMap(parts[2]);
+                    int selfCurrentScore = scoresForBet.getOrDefault(playerNickname, 0);
 
-                SwingUtilities.invokeLater(() -> {
-                    betPanel.startBetRound(selfCurrentScore, targetNextIdx);
-                    showScreen(SCREEN_BET);
-                });
+                    SwingUtilities.invokeLater(() -> {
+                        betPanel.startBetRound(selfCurrentScore, targetNextIdx);
+                        showScreen(SCREEN_BET);
+                    });
+                }
                 break;
 
             case "GAME_OVER":
@@ -186,6 +194,7 @@ public class MainWindow extends JFrame implements MessageListener {
 
     private Map<String, Integer> parseStandingsMap(String balancePayload) {
         Map<String, Integer> generatedMap = new LinkedHashMap<>();
+        if (balancePayload.trim().isEmpty()) return generatedMap;
         String[] nodes = balancePayload.split(",");
         for (String pair : nodes) {
             if (!pair.trim().isEmpty()) {

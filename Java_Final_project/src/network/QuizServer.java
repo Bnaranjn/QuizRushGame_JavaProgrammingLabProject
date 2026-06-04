@@ -37,6 +37,17 @@ public class QuizServer {
         acceptThread.start();
     }
 
+    /** Helper to find how many actual competitive players are in the room (excludes Host) */
+    private int getActivePlayerCount() {
+        int count = 0;
+        for (String name : playerRoster.keySet()) {
+            if (!name.equalsIgnoreCase("Host")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public synchronized void handleMessage(String message, ClientHandler sender) {
         String[] tokens = message.split("\\|");
         String command = tokens[0];
@@ -45,18 +56,21 @@ public class QuizServer {
             case "JOIN":
                 String joinName = tokens[1];
                 if (!playerRoster.containsKey(joinName)) {
-                    playerRoster.put(joinName, new Player(joinName));
+                    Player newPlayer = new Player(joinName);
+                    // Flag the host so they are bypassed during scoring evaluations
+                    if (joinName.equalsIgnoreCase("Host")) {
+                        newPlayer.setHost(true);
+                    }
+                    playerRoster.put(joinName, newPlayer);
                 }
                 broadcastPlayerRoster();
                 break;
 
             case "START_GAME":
-                // Server initializes quiz model from source text descriptor path safely
                 String targetFile = tokens.length > 1 ? tokens[1] : "quiz.txt";
                 activeQuiz = new Quiz();
                 activeQuiz.loadQuizFromFile(targetFile);
                 
-                // Zero out scores across tracking profiles
                 for (Player p : playerRoster.values()) {
                     p.setScore(0);
                 }
@@ -70,6 +84,9 @@ public class QuizServer {
                 int answerIndex = Integer.parseInt(tokens[2]);
                 int elapsedBonus = Integer.parseInt(tokens[3]);
 
+                // Defend against accidental Host submissions
+                if (answeringPlayer.equalsIgnoreCase("Host")) return;
+
                 Player pAnswer = playerRoster.get(answeringPlayer);
                 if (pAnswer != null) {
                     pAnswer.setSelectedAnswer(answerIndex);
@@ -77,7 +94,8 @@ public class QuizServer {
                 }
 
                 questionsAnsweredCount++;
-                if (questionsAnsweredCount >= playerRoster.size()) {
+                // Wait only for the active competitive players
+                if (questionsAnsweredCount >= getActivePlayerCount()) {
                     evaluateRoundAnswers();
                 }
                 break;
@@ -87,20 +105,21 @@ public class QuizServer {
                 int wagerAmount = Integer.parseInt(tokens[2]);
                 int multValue = Integer.parseInt(tokens[3]);
 
+                if (bettingPlayer.equalsIgnoreCase("Host")) return;
+
                 Player pBet = playerRoster.get(bettingPlayer);
                 if (pBet != null) {
                     pBet.placeBet(wagerAmount, multValue);
                 }
 
                 betsPlacedCount++;
-                if (betsPlacedCount >= playerRoster.size()) {
+                if (betsPlacedCount >= getActivePlayerCount()) {
                     betsPlacedCount = 0;
                     advanceToNextQuestion();
                 }
                 break;
 
             case "REQUEST_NEXT_PHASE":
-                // Triggered by host on RevealPanel to progress flow sequence safely
                 int totalCount = activeQuiz.getTotalQuestions();
                 GameSession.NextEvent event = GameSession.getNextEvent(currentQuestionIdx, totalCount);
 
@@ -120,7 +139,6 @@ public class QuizServer {
         questionsAnsweredCount = 0;
         Question q = activeQuiz.getQuestionAt(currentQuestionIdx);
         
-        // Structure: QUESTION|index|questionText|opt1|opt2|opt3|opt4
         broadcast("QUESTION|" + currentQuestionIdx + "|" + q.getQuestionText() + "|" +
                 q.getOption(0) + "|" + q.getOption(1) + "|" + q.getOption(2) + "|" + q.getOption(3));
     }
@@ -130,23 +148,25 @@ public class QuizServer {
         int correctIdx = q.getCorrectOptionIndex();
 
         for (Player p : playerRoster.values()) {
+            if (p.isHost()) continue; // Skip host scoring completely
+            
             boolean isCorrect = (p.getSelectedAnswer() == correctIdx);
             p.resolveAnswer(isCorrect, p.getAnswerTimeLeft());
-            p.resetAnswer(); // Clean input states for upcoming rounds
+            p.resetAnswer();
         }
 
-        // Build standings string payload: REVEAL|correctIdx|name1:score1,name2:score2...
         StringBuilder sb = new StringBuilder("REVEAL|").append(correctIdx).append("|");
         for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase("Host")) continue; // Don't show Host on standings
             sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
         }
         broadcast(sb.toString());
     }
 
     private void broadcastBetRoundPhase() {
-        // Structure: BET_ROUND|nextQuestionIndex|name1:score1,name2:score2...
         StringBuilder sb = new StringBuilder("BET_ROUND|").append(currentQuestionIdx + 1).append("|");
         for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase("Host")) continue;
             sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
         }
         broadcast(sb.toString());
@@ -155,6 +175,7 @@ public class QuizServer {
     private void broadcastFinalLeaderboard() {
         StringBuilder sb = new StringBuilder("GAME_OVER|");
         for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase("Host")) continue;
             sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
         }
         broadcast(sb.toString());
