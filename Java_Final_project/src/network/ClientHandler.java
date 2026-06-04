@@ -1,47 +1,45 @@
 package network;
 
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 
-/**
- * ClientHandler: One thread per connected client.
- * Fixed: passes messages to server.handleMessage() so JOIN can be parsed
- * and messages are not echoed blindly.
- */
 public class ClientHandler extends Thread {
     private final Socket socket;
     private final QuizServer server;
-    private final DataInputStream in;
-    private final DataOutputStream out;
+    private DataInputStream in;
+    private DataOutputStream out;
 
-    public ClientHandler(Socket socket, QuizServer server) throws IOException {
+    public ClientHandler(Socket socket, QuizServer server) {
         this.socket = socket;
         this.server = server;
-        in  = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-        out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        setDaemon(true);
-    }
-
-    @Override
-    public void run() {
-        try {
-            while (true) {
-                String message = in.readUTF();
-                server.handleMessage(message, this);
-            }
-        } catch (Exception e) {
-            server.removeClient(this);
-        } finally {
-            try { socket.close(); } catch (IOException ignored) {}
-        }
     }
 
     public void send(String message) {
         try {
             out.writeUTF(message);
             out.flush();
-        } catch (Exception e) {
+        } catch (IOException e) {
             server.removeClient(this);
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            this.in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            this.out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+
+            while (!socket.isClosed()) {
+                String message = in.readUTF();
+                server.handleMessage(message, this);
+            }
+        } catch (IOException e) {
+            // Catches natural window socket terminations gracefully
+        } finally {
+            server.removeClient(this);
+            try {
+                socket.close();
+            } catch (IOException ignored) {}
         }
     }
 }

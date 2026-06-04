@@ -1,5 +1,5 @@
 package QuizGame;
-
+// not used in the current version Jun 04
 /**
  * QuestionBank: Static store of quiz questions.
  * Format per row: {questionText, optA, optB, optC, optD, correctIndex (0-based)}

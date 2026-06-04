@@ -37,7 +37,6 @@ public class QuizServer {
         acceptThread.start();
     }
 
-    /** Helper to find how many actual competitive players are in the room (excludes Host) */
     private int getActivePlayerCount() {
         int count = 0;
         for (String name : playerRoster.keySet()) {
@@ -57,13 +56,30 @@ public class QuizServer {
                 String joinName = tokens[1];
                 if (!playerRoster.containsKey(joinName)) {
                     Player newPlayer = new Player(joinName);
-                    // Flag the host so they are bypassed during scoring evaluations
                     if (joinName.equalsIgnoreCase("Host")) {
                         newPlayer.setHost(true);
                     }
                     playerRoster.put(joinName, newPlayer);
                 }
                 broadcastPlayerRoster();
+                break;
+
+            case "LEAVE":
+                String leaveName = tokens[1];
+                playerRoster.remove(leaveName);
+                broadcastPlayerRoster();
+                
+                // Safety: Re-verify submission limits in case a player left mid-round
+                int remainingPlayers = getActivePlayerCount();
+                if (remainingPlayers > 0) {
+                    if (questionsAnsweredCount >= remainingPlayers) {
+                        evaluateRoundAnswers();
+                    }
+                    if (betsPlacedCount >= remainingPlayers) {
+                        betsPlacedCount = 0;
+                        advanceToNextQuestion();
+                    }
+                }
                 break;
 
             case "START_GAME":
@@ -84,7 +100,6 @@ public class QuizServer {
                 int answerIndex = Integer.parseInt(tokens[2]);
                 int elapsedBonus = Integer.parseInt(tokens[3]);
 
-                // Defend against accidental Host submissions
                 if (answeringPlayer.equalsIgnoreCase("Host")) return;
 
                 Player pAnswer = playerRoster.get(answeringPlayer);
@@ -94,7 +109,6 @@ public class QuizServer {
                 }
 
                 questionsAnsweredCount++;
-                // Wait only for the active competitive players
                 if (questionsAnsweredCount >= getActivePlayerCount()) {
                     evaluateRoundAnswers();
                 }
@@ -148,7 +162,7 @@ public class QuizServer {
         int correctIdx = q.getCorrectOptionIndex();
 
         for (Player p : playerRoster.values()) {
-            if (p.isHost()) continue; // Skip host scoring completely
+            if (p.isHost()) continue;
             
             boolean isCorrect = (p.getSelectedAnswer() == correctIdx);
             p.resolveAnswer(isCorrect, p.getAnswerTimeLeft());
@@ -157,7 +171,7 @@ public class QuizServer {
 
         StringBuilder sb = new StringBuilder("REVEAL|").append(correctIdx).append("|");
         for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
-            if (entry.getKey().equalsIgnoreCase("Host")) continue; // Don't show Host on standings
+            if (entry.getKey().equalsIgnoreCase("Host")) continue;
             sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");
         }
         broadcast(sb.toString());

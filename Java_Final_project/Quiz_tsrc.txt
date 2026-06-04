@@ -1,0 +1,13 @@
+# QuizRush Source Configuration Payload
+# Format: Question Text|Option 1|Option 2|Option 3|Option 4|Correct Index (1-4)
+# Lines starting with '#' or blank rows are safely ignored by the parser.
+
+mi bomboclat|t1|t2|t3|4|1
+Which programming language uses JVM execution routines?|Python|C++|Java|Ruby|3
+What is the time complexity of a balanced HashMap lookup?|O(n)|O(1)|O(log n)|O(n log n)|2
+Which protocol provides reliable, ordered communication streams?|UDP|TCP|ICMP|DNS|2
+What software design pattern ensures a class has only one global instance?|Factory|Observer|Singleton|Adapter|3
+Which data structure operates strictly on a Last-In, First-Out basis?|Queue|Stack|Tree|Graph|2
+What does HTML stand for?|HyperText Markup Language|HighText Machine Language|HyperTransfer Modern Language|HyperTech Multi Language|1
+Which SQL clause is used to filter results after an aggregation has occurred?|WHERE|ORDER BY|GROUP BY|HAVING|4
+What is the primary function of an operating system kernel?|Render 3D graphics|Manage system hardware resources|Compile source code|Host web server connections|2

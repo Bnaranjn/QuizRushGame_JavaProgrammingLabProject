@@ -2,6 +2,8 @@ package ui;
 
 import javax.swing.*;
 import java.awt.CardLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.*;
 import network.*;
 
@@ -9,7 +11,8 @@ public class MainWindow extends JFrame implements MessageListener {
     public static final String SCREEN_SETUP = "SETUP_VIEW";
     public static final String SCREEN_JOIN = "JOIN_VIEW";
     public static final String SCREEN_LOBBY = "LOBBY_VIEW";
-    public static final String SCREEN_WAITING = "WAITING_VIEW";
+    public static final String SCREEN_HOST_WAITING = "HOST_WAITING_VIEW";
+    public static final String SCREEN_PLAYER_WAITING = "PLAYER_WAITING_VIEW";
     public static final String SCREEN_QUESTION = "QUESTION_VIEW";
     public static final String SCREEN_REVEAL = "REVEAL_VIEW";
     public static final String SCREEN_BET = "BET_VIEW";
@@ -21,7 +24,8 @@ public class MainWindow extends JFrame implements MessageListener {
     private HostSetupPanel setupPanel;
     private JoinPanel joinPanel;
     private LobbyPanel lobbyPanel;
-    private PlayerWaitingLobbyPanel waitingPanel;
+    private HostWaitingPanel hostWaitingPanel;
+    private PlayerWaitingPanel playerWaitingPanel;
     private QuestionPanel questionPanel;
     private RevealPanel revealPanel;
     private LeaderboardPanel leaderboardPanel;
@@ -32,20 +36,29 @@ public class MainWindow extends JFrame implements MessageListener {
     
     private String playerNickname = "Unknown";
     private boolean isHostNode = false;
+    private int connectedPlayerCount = 0;
     
-    // Default starting suggestion value passed down to components
     private static final int DEFAULT_FALLBACK_PORT = 5000; 
 
     public MainWindow() {
         setTitle("QuizRush Framework Engine");
         setSize(480, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Intercept manually
         setLocationRelativeTo(null);
+
+        // Frame close handler to alert connected clients or disconnect from server cleanly
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                handleWindowCloseCleanup();
+            }
+        });
 
         setupPanel = new HostSetupPanel(this, DEFAULT_FALLBACK_PORT);
         joinPanel = new JoinPanel(this);
         lobbyPanel = new LobbyPanel(this);
-        waitingPanel = new PlayerWaitingLobbyPanel(this);
+        hostWaitingPanel = new HostWaitingPanel(this);
+        playerWaitingPanel = new PlayerWaitingPanel(this);
         questionPanel = new QuestionPanel(this);
         revealPanel = new RevealPanel(this);
         betPanel = new BetPanel(this);
@@ -54,7 +67,8 @@ public class MainWindow extends JFrame implements MessageListener {
         cardContainer.add(setupPanel, SCREEN_SETUP);
         cardContainer.add(joinPanel, SCREEN_JOIN);
         cardContainer.add(lobbyPanel, SCREEN_LOBBY);
-        cardContainer.add(waitingPanel, SCREEN_WAITING);
+        cardContainer.add(hostWaitingPanel, SCREEN_HOST_WAITING);
+        cardContainer.add(playerWaitingPanel, SCREEN_PLAYER_WAITING);
         cardContainer.add(questionPanel, SCREEN_QUESTION);
         cardContainer.add(revealPanel, SCREEN_REVEAL);
         cardContainer.add(betPanel, SCREEN_BET);
@@ -68,7 +82,6 @@ public class MainWindow extends JFrame implements MessageListener {
         SwingUtilities.invokeLater(() -> cardLayout.show(cardContainer, screenKey));
     }
 
-    /** Modified to accept an explicitly configured dynamic port allocation runtime mapping */
     public void startHosting(int selectedPort) {
         this.isHostNode = true;
         this.playerNickname = "Host";
@@ -79,16 +92,19 @@ public class MainWindow extends JFrame implements MessageListener {
             networkClientLink = new QuizClient("localhost", selectedPort, this);
             networkClientLink.send("JOIN|Host");
             
-            // Push active metrics into components before screen transitions take place
             lobbyPanel.setRoomPortDisplay(selectedPort);
             lobbyPanel.setHostControls(true);
             showScreen(SCREEN_LOBBY);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to initialize server loop binding on port " + selectedPort + ".\nError: " + e.getMessage(), "Server Bind Exception", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Failed to initialize server loop: " + e.getMessage(), "Server Bind Exception", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void connectToGameLobby(String name, String ip, int port) {
+        if (name.equalsIgnoreCase("Host")) {
+            JOptionPane.showMessageDialog(this, "'Host' is a reserved administrative handle.", "Identity Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         this.isHostNode = false;
         this.playerNickname = name;
         try {
@@ -99,12 +115,20 @@ public class MainWindow extends JFrame implements MessageListener {
             lobbyPanel.setHostControls(false);
             showScreen(SCREEN_LOBBY);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Remote destination socket links refused connection: " + e.getMessage(), "Connection Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Remote destination socket links refused connection.", "Connection Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void hostLoadAndStartQuiz(String filename) {
-        if (isHostNode && networkClientLink != null) {
+        if (!isHostNode) return;
+        
+        // Block starting the quiz game if no actual structural contestants exist yet
+        if (connectedPlayerCount <= 0) {
+            JOptionPane.showMessageDialog(this, "Cannot initialize game configuration: At least one player client must be connected to the lobby.", "Empty Room Alert", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (networkClientLink != null) {
             networkClientLink.send("START_GAME|" + filename);
         }
     }
@@ -113,7 +137,8 @@ public class MainWindow extends JFrame implements MessageListener {
         if (isHostNode) return;
         if (networkClientLink != null) {
             networkClientLink.send("ANSWER|" + playerNickname + "|" + chosenIndex + "|" + remainingTimeSeconds);
-            showScreen(SCREEN_WAITING);
+            playerWaitingPanel.setMessage("RESPONSE LOCKED IN", "Waiting for other players to finish computing...");
+            showScreen(SCREEN_PLAYER_WAITING);
         }
     }
 
@@ -121,7 +146,8 @@ public class MainWindow extends JFrame implements MessageListener {
         if (isHostNode) return;
         if (networkClientLink != null) {
             networkClientLink.send("BET|" + playerNickname + "|" + pointsWagered + "|" + selectedMultiplier);
-            showScreen(SCREEN_WAITING);
+            playerWaitingPanel.setMessage("BET PLACED", "Waiting for other players to lock in their risk allocations...");
+            showScreen(SCREEN_PLAYER_WAITING);
         }
     }
 
@@ -131,24 +157,50 @@ public class MainWindow extends JFrame implements MessageListener {
         }
     }
 
+    private void handleWindowCloseCleanup() {
+        if (isHostNode && localServerInstance != null) {
+            // Signal server to announce an authoritative disconnect broadcast to all clients
+            localServerInstance.broadcast("SERVER_SHUTDOWN");
+            localServerInstance.stopServer();
+        } else if (networkClientLink != null) {
+            // Send explicit disconnect notice so server updates player counts dynamically
+            networkClientLink.send("LEAVE|" + playerNickname);
+            networkClientLink.disconnect();
+        }
+        System.exit(0);
+    }
+
     @Override
     public void onMessageReceived(String message) {
         String[] parts = message.split("\\|");
         String header = parts[0];
 
         switch (header) {
+            case "SERVER_SHUTDOWN":
+                networkClientLink.disconnect();
+                JOptionPane.showMessageDialog(this, "The Host has terminated the game session room. Closing application window.", "Session Closed", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+                break;
+
             case "PLAYER_LIST":
                 List<String> list = Arrays.asList(parts[1].split(","));
+                // Compute non-host player metrics count safely
+                int playersOnlyCount = 0;
+                for (String name : list) {
+                    if (!name.equalsIgnoreCase("Host")) playersOnlyCount++;
+                }
+                this.connectedPlayerCount = playersOnlyCount;
                 lobbyPanel.updatePlayerList(list);
                 break;
 
             case "START_GAME":
-                showScreen(SCREEN_WAITING);
+                showScreen(isHostNode ? SCREEN_HOST_WAITING : SCREEN_PLAYER_WAITING);
                 break;
 
             case "QUESTION":
                 if (isHostNode) {
-                    showScreen(SCREEN_WAITING);
+                    hostWaitingPanel.setMessage("ROUND PROGRESS TRACKER", "Players are currently answering questions...");
+                    showScreen(SCREEN_HOST_WAITING);
                 } else {
                     String qText = parts[2];
                     String a = parts[3];
@@ -175,7 +227,8 @@ public class MainWindow extends JFrame implements MessageListener {
 
             case "BET_ROUND":
                 if (isHostNode) {
-                    showScreen(SCREEN_WAITING);
+                    hostWaitingPanel.setMessage("BET PHASE MONITOR", "Players are adjusting wager parameters...");
+                    showScreen(SCREEN_HOST_WAITING);
                 } else {
                     int targetNextIdx = Integer.parseInt(parts[1]);
                     Map<String, Integer> scoresForBet = parseStandingsMap(parts[2]);
@@ -209,7 +262,7 @@ public class MainWindow extends JFrame implements MessageListener {
         return generatedMap;
     }
 
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
-//    }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
+    }
 }
