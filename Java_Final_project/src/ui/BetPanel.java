@@ -16,114 +16,161 @@ public class BetPanel extends JPanel {
     private final JLabel wagerPreviewLabel;
     private final JLabel timerLabel;
     private final JButton submitBtn;
+    private final JButton[] wagerBtns;
 
-    private static final Color BG = new Color(24, 28, 48);
-    private static final Color CARD_BG = new Color(36, 42, 73);
-    private static final Color TEXT_COLOR = Color.WHITE;
+    private static final Color BG      = new Color(24, 28, 48);
+    private static final Color CARD_BG = new Color(30, 35, 64);
+    private static final Color GOLD    = new Color(250, 199, 117);
+    private static final Color GREEN   = new Color(151, 196, 89);
+    private static final Color RED     = new Color(240, 149, 123);
+    private static final Color MUTED   = new Color(107, 114, 153);
+    private static final Color TEXT    = Color.WHITE;
 
     public BetPanel(MainWindow window) {
         this.window = window;
-        setLayout(new BorderLayout());
         setBackground(BG);
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(30, 44, 30, 44));
 
-        // Header Panel Components
-        JPanel headerPanel = new JPanel(new GridLayout(2, 1));
-        headerPanel.setBackground(BG);
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.setBackground(BG);
 
-        JLabel titleLabel = new JLabel("BETTING PHASE", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 26));
-        titleLabel.setForeground(new Color(241, 196, 15));
-        headerPanel.add(titleLabel);
-
-        timerLabel = new JLabel("Time Remaining: 30", SwingConstants.CENTER);
-        timerLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-        timerLabel.setForeground(Color.LIGHT_GRAY);
-        headerPanel.add(timerLabel);
-
-        add(headerPanel, BorderLayout.NORTH);
-
-        // Core Configuration Container Panel
-        JPanel centerCard = new JPanel();
-        centerCard.setLayout(new BoxLayout(centerCard, BoxLayout.Y_AXIS));
-        centerCard.setBackground(CARD_BG);
-        centerCard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        scoreLabel = new JLabel("Your Current Balance: 0 pts", SwingConstants.CENTER);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        scoreLabel.setForeground(TEXT_COLOR);
+        // Score display
+        scoreLabel = new JLabel("0 pts");
+        scoreLabel.setForeground(GOLD);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 22));
         scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerCard.add(scoreLabel);
-        centerCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Wager Percentage Sliders/Selectors Configuration
-        JLabel wagerTitle = new JLabel("Select Risk Percentage:", SwingConstants.CENTER);
-        wagerTitle.setFont(new Font("Arial", Font.PLAIN, 14));
-        wagerTitle.setForeground(Color.LIGHT_GRAY);
-        wagerTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerCard.add(wagerTitle);
+        JLabel scoreSub = new JLabel("your current score");
+        scoreSub.setForeground(MUTED);
+        scoreSub.setFont(new Font("Arial", Font.PLAIN, 12));
+        scoreSub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel wagerGrid = new JPanel(new GridLayout(1, 4, 10, 0));
-        wagerGrid.setBackground(CARD_BG);
-        wagerGrid.setMaximumSize(new Dimension(350, 40));
+        // Timer
+        timerLabel = new JLabel("30");
+        timerLabel.setForeground(GOLD);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Title
+        JLabel title = new JLabel("Bet Round!");
+        title.setForeground(TEXT);
+        title.setFont(new Font("Arial", Font.BOLD, 26));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel sub = new JLabel("Risk your points for a bigger reward");
+        sub.setForeground(MUTED);
+        sub.setFont(new Font("Arial", Font.PLAIN, 13));
+        sub.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Wager buttons
+        JPanel wagerPanel = new JPanel(new GridLayout(1, 4, 8, 0));
+        wagerPanel.setBackground(BG);
+        wagerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         int[] percents = {25, 50, 75, 100};
-        for (int pct : percents) {
-            JButton pctBtn = new JButton(pct + "%");
-            pctBtn.addActionListener(e -> {
-                this.wagerPercent = pct;
+        String[] wagerLabels = {"25%", "50%", "75%", "All in"};
+        wagerBtns = new JButton[4];
+        for (int i = 0; i < percents.length; i++) {
+            final int pct = percents[i];
+            wagerBtns[i] = makeWagerBtn(wagerLabels[i]);
+            wagerBtns[i].addActionListener(e -> {
+                wagerPercent = pct;
+                highlightWager(pct);
                 recalculateWagerMetrics();
             });
-            wagerGrid.add(pctBtn);
+            wagerPanel.add(wagerBtns[i]);
         }
-        centerCard.add(Box.createRigidArea(new Dimension(0, 10)));
-        centerCard.add(wagerGrid);
-        centerCard.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        // Multiplier Selection System
-        JLabel multTitle = new JLabel("Choose Score Return Multiplier:", SwingConstants.CENTER);
-        multTitle.setFont(new Font("Arial", Font.PLAIN, 14));
-        multTitle.setForeground(Color.LIGHT_GRAY);
-        multTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerCard.add(multTitle);
+        // Win/lose preview card
+        JLabel winLabel  = new JLabel("+0 pts");
+        JLabel loseLabel = new JLabel("-0 pts");
+        winLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        loseLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        winLabel.setForeground(GREEN);
+        loseLabel.setForeground(RED);
+        loseLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        JPanel multGrid = new JPanel(new GridLayout(1, 3, 10, 0));
-        multGrid.setBackground(CARD_BG);
-        multGrid.setMaximumSize(new Dimension(350, 40));
-        int[] multipliers = {2, 3, 4};
-        for (int mult : multipliers) {
-            JButton mBtn = new JButton("x" + mult);
-            mBtn.addActionListener(e -> {
-                this.selectedMultiplier = mult;
-                recalculateWagerMetrics();
-            });
-            multGrid.add(mBtn);
-        }
-        centerCard.add(Box.createRigidArea(new Dimension(0, 10)));
-        centerCard.add(multGrid);
-        centerCard.add(Box.createRigidArea(new Dimension(0, 30)));
+        // Store references so recalculateWagerMetrics can update them
+        this.wagerPreviewLabel = new JLabel(); // kept for interface compatibility
+        this.wagerPreviewLabel.setVisible(false);
 
-        // Live Calculated Readouts
-        wagerPreviewLabel = new JLabel("Wager: 0 | Risk: 0 | Win Payout: 0", SwingConstants.CENTER);
-        wagerPreviewLabel.setFont(new Font("Arial", Font.BOLD, 15));
-        wagerPreviewLabel.setForeground(new Color(52, 152, 219));
-        wagerPreviewLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerCard.add(wagerPreviewLabel);
+        // We update win/lose labels directly, so keep them accessible via a wrapper trick:
+        // Instead, replace wagerPreviewLabel usage with a custom update approach below.
+        // See recalculateWagerMetrics() — we repurpose winLabel/loseLabel via fields.
+        this.winDisplayLabel  = winLabel;
+        this.loseDisplayLabel = loseLabel;
 
-        add(centerCard, BorderLayout.CENTER);
+        JPanel previewPanel = new JPanel(new GridLayout(1, 2));
+        previewPanel.setBackground(CARD_BG);
+        previewPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(42, 47, 74)),
+                new EmptyBorder(10, 14, 10, 14)));
+        previewPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
 
-        // Confirmation Footer Button Action
-        submitBtn = new JButton("Lock In Bet");
-        submitBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        submitBtn.setBackground(new Color(155, 89, 182));
-        submitBtn.setForeground(Color.WHITE);
+        JPanel winSide = new JPanel(new BorderLayout());
+        winSide.setBackground(CARD_BG);
+        winSide.add(makeSmallLabel("if correct"),  BorderLayout.NORTH);
+        winSide.add(winLabel, BorderLayout.CENTER);
+
+        JPanel loseSide = new JPanel(new BorderLayout());
+        loseSide.setBackground(CARD_BG);
+        loseSide.add(makeSmallLabel("if wrong"), BorderLayout.NORTH);
+        loseSide.add(loseLabel, BorderLayout.CENTER);
+
+        previewPanel.add(winSide);
+        previewPanel.add(loseSide);
+
+        // Skip + Place bet buttons
+        JButton skipBtn = new JButton("Skip bet");
+        skipBtn.setBackground(BG);
+        skipBtn.setForeground(MUTED);
+        skipBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        skipBtn.setFocusPainted(false);
+        skipBtn.addActionListener(e -> {
+            if (betTimer != null) betTimer.stop();
+            wagerPercent = 0;
+            fireBetToNetwork();
+        });
+
+        submitBtn = new JButton("Place Bet >>");
+        submitBtn.setBackground(GOLD);
+        submitBtn.setForeground(new Color(65, 36, 2));
+        submitBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        submitBtn.setFocusPainted(false);
         submitBtn.addActionListener(e -> fireBetToNetwork());
-        
-        JPanel footerPanel = new JPanel(new BorderLayout());
-        footerPanel.setBackground(BG);
-        footerPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
-        footerPanel.add(submitBtn, BorderLayout.CENTER);
-        add(footerPanel, BorderLayout.SOUTH);
+
+        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        actionPanel.setBackground(BG);
+        actionPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        actionPanel.add(skipBtn);
+        actionPanel.add(submitBtn);
+
+        // Assemble
+        center.add(scoreSub);
+        center.add(scoreLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 6)));
+        center.add(timerLabel);
+        center.add(Box.createRigidArea(new Dimension(0, 16)));
+        center.add(title);
+        center.add(Box.createRigidArea(new Dimension(0, 5)));
+        center.add(sub);
+        center.add(Box.createRigidArea(new Dimension(0, 20)));
+        center.add(sectionLabel("How much to wager"));
+        center.add(Box.createRigidArea(new Dimension(0, 8)));
+        center.add(wagerPanel);
+        center.add(Box.createRigidArea(new Dimension(0, 14)));
+        center.add(previewPanel);
+        center.add(Box.createRigidArea(new Dimension(0, 18)));
+        center.add(actionPanel);
+        add(center, BorderLayout.CENTER);
+
+        highlightWager(25);
     }
+
+    // Extra label fields for the win/lose preview
+    private JLabel winDisplayLabel;
+    private JLabel loseDisplayLabel;
 
     public void startBetRound(int currentScore, int nextQuestionIdx) {
         this.localScore = currentScore;
@@ -131,16 +178,19 @@ public class BetPanel extends JPanel {
         this.selectedMultiplier = 2;
         this.timeLeft = 30;
 
-        scoreLabel.setText("Your Current Balance: " + localScore + " pts");
+        scoreLabel.setText(localScore + " pts");
+        highlightWager(25);
         recalculateWagerMetrics();
         submitBtn.setEnabled(true);
-        submitBtn.setText("Lock In Bet");
+        submitBtn.setText("Place Bet >>");
 
         if (betTimer != null && betTimer.isRunning()) betTimer.stop();
         betTimer = new Timer(1000, e -> {
             timeLeft--;
-            timerLabel.setText("Time Remaining: " + timeLeft);
+            timerLabel.setText(String.valueOf(timeLeft));
+            if (timeLeft <= 10) timerLabel.setForeground(RED);
             if (timeLeft <= 0) {
+                betTimer.stop();
                 fireBetToNetwork();
             }
         });
@@ -148,18 +198,50 @@ public class BetPanel extends JPanel {
     }
 
     private void recalculateWagerMetrics() {
-        int calculatedWager = (int) (localScore * (wagerPercent / 100.0));
-        int potentialGain = calculatedWager * (selectedMultiplier - 1);
-        wagerPreviewLabel.setText(String.format("Betting: %d pts | Lose: -%d | Gain: +%d", 
-                calculatedWager, calculatedWager, potentialGain));
+        int wagered     = (int)(localScore * (wagerPercent / 100.0));
+        int gain        = wagered * (selectedMultiplier - 1);
+        winDisplayLabel.setText("+" + gain + " pts");
+        loseDisplayLabel.setText("-" + wagered + " pts");
     }
 
     private void fireBetToNetwork() {
         if (betTimer != null) betTimer.stop();
         submitBtn.setEnabled(false);
         submitBtn.setText("Waiting for others...");
-        
-        int finalWager = (int) (localScore * (wagerPercent / 100.0));
+
+        int finalWager = (int)(localScore * (wagerPercent / 100.0));
         window.submitPlayerBet(finalWager, selectedMultiplier);
+    }
+
+    private void highlightWager(int val) {
+        int[] vals = {25, 50, 75, 100};
+        for (int i = 0; i < wagerBtns.length; i++) {
+            boolean sel = (vals[i] == val);
+            wagerBtns[i].setBackground(sel ? new Color(90, 120, 255) : new Color(42, 47, 80));
+        }
+    }
+
+    private JButton makeWagerBtn(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Arial", Font.BOLD, 13));
+        btn.setForeground(TEXT);
+        btn.setBackground(new Color(42, 47, 80));
+        btn.setFocusPainted(false);
+        return btn;
+    }
+
+    private JLabel sectionLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(MUTED);
+        lbl.setFont(new Font("Arial", Font.BOLD, 12));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return lbl;
+    }
+
+    private JLabel makeSmallLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(MUTED);
+        lbl.setFont(new Font("Arial", Font.PLAIN, 11));
+        return lbl;
     }
 }

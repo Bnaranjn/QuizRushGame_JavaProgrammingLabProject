@@ -28,11 +28,16 @@ public class LeaderboardPanel extends JPanel {
         innerScrollArea.getViewport().setBackground(new Color(18, 18, 30));
         add(innerScrollArea, BorderLayout.CENTER);
 
-        JButton finalizeExitBtn = new JButton("Close Session Workspace");
+        JButton finalizeExitBtn = new JButton("Close");
+        
+        finalizeExitBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         finalizeExitBtn.setFont(new Font("Arial", Font.BOLD, 16));
         finalizeExitBtn.setBackground(new Color(192, 41, 43));
         finalizeExitBtn.setForeground(Color.WHITE);
-        finalizeExitBtn.addActionListener(e -> System.exit(0));
+        finalizeExitBtn.setFocusPainted(false);
+        finalizeExitBtn.setBorder(new EmptyBorder(12, 40, 12, 40));
+        finalizeExitBtn.setMaximumSize(new Dimension(280, 50));
+	    finalizeExitBtn.addActionListener(e -> System.exit(0));
 
         JPanel panelWrap = new JPanel();
         panelWrap.setBackground(new Color(18, 18, 30));
