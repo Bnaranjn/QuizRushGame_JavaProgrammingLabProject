@@ -10,9 +10,9 @@ public class LobbyPanel extends JPanel {
     private final DefaultListModel<String> listModel;
     private final JButton startBtn;
     private final JLabel lobbyCodeLabel;
-    private final JLabel countLabel; // CHANGED: added player count label like the first panel
+    private final JLabel countLabel; // CHANGED: added player count label
 
-    // CHANGED: colour palette brought in from the first panel
+    // CHANGED: colour palette
     private static final Color BG         = new Color(24, 28, 48);
     private static final Color TEXT_COLOR = Color.WHITE;
 
@@ -20,76 +20,93 @@ public class LobbyPanel extends JPanel {
         this.window = window;
         this.listModel = new DefaultListModel<>();
 
-        // CHANGED: switched from BorderLayout to BoxLayout Y_AXIS to match first panel's card style
+        // CHANGED: switched from BorderLayout to BoxLayout Y_AXIS
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(BG);
-        setBorder(new EmptyBorder(50, 60, 50, 60)); // CHANGED: padding matches first panel
+        setBorder(new EmptyBorder(50, 60, 50, 60)); 
 
-        // CHANGED: title style matches first panel ("QuizRush - Lobby", bold 32pt)
+        // CHANGED: title style
         JLabel titleLabel = new JLabel("QuizRush - Lobby");
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
         titleLabel.setForeground(TEXT_COLOR);
-
-        // CHANGED: "Room PIN" caption label above the port number, like first panel's pinTitle
         JLabel portCaption = new JLabel("Room Port");
         portCaption.setAlignmentX(Component.CENTER_ALIGNMENT);
         portCaption.setFont(new Font("Arial", Font.BOLD, 15));
         portCaption.setForeground(new Color(180, 180, 200));
 
-        // CHANGED: port number now large yellow 44pt like the first panel's pinLabel
+        // CHANGED: port number now large yellow 44pt
         lobbyCodeLabel = new JLabel("----");
         lobbyCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         lobbyCodeLabel.setFont(new Font("Arial", Font.BOLD, 44));
         lobbyCodeLabel.setForeground(new Color(255, 215, 0));
 
-        // CHANGED: player count label copied from first panel
+        // CHANGED: player count label
         countLabel = new JLabel("0 player(s) joined");
         countLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         countLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         countLabel.setForeground(new Color(150, 200, 150));
 
-        // CHANGED: player list area is now a plain JPanel with chip labels (like first panel)
-        // still backed by DefaultListModel so updatePlayerList() works without changes
         JPanel playerListPanel = new JPanel();
         playerListPanel.setLayout(new BoxLayout(playerListPanel, BoxLayout.Y_AXIS));
         playerListPanel.setBackground(BG);
         playerListPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // keep the JList hidden behind the scenes so updatePlayerList() can still populate it,
-        // but render the chip panel visually — see updatePlayerList() below
-        JList<String> hiddenList = new JList<>(listModel); // logic anchor, not displayed
+        JList<String> hiddenList = new JList<>(listModel);
 
         JScrollPane scroll = new JScrollPane(playerListPanel);
         scroll.setBackground(BG);
-        scroll.setBorder(BorderFactory.createEmptyBorder()); // CHANGED: no border like first panel
+        scroll.setBorder(BorderFactory.createEmptyBorder()); 
         scroll.setPreferredSize(new Dimension(360, 160));
         scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
         scroll.getViewport().setBackground(BG);
 
-        // CHANGED: Start Quiz button style matches first panel (blue, centered, EmptyBorder padding)
+        // CHANGED: Start Quiz button style
         startBtn = new JButton("Start Quiz");
         startBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         startBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        startBtn.setBackground(new Color(90, 120, 255)); // CHANGED: blue like first panel, was green
+        startBtn.setBackground(new Color(90, 120, 255)); 
         startBtn.setForeground(Color.WHITE);
         startBtn.setFocusPainted(false);
-        startBtn.setBorder(new EmptyBorder(12, 40, 12, 40)); // CHANGED: pill padding like first panel
+        startBtn.setBorder(new EmptyBorder(12, 40, 12, 40)); 
         startBtn.setMaximumSize(new Dimension(260, 52));
 
         startBtn.addActionListener(e -> {
-            String fileName = JOptionPane.showInputDialog(
-                window,
-                "Enter the name of your quiz source file (e.g., quiz.txt):",
-                "Load Quiz Configuration",
-                JOptionPane.QUESTION_MESSAGE
-            );
-            if (fileName != null && !fileName.trim().isEmpty()) {
-                window.hostLoadAndStartQuiz(fileName.trim());
+            JTextField field = new JTextField(20);
+            field.setFont(new Font("Arial", Font.PLAIN, 14));
+            field.setBackground(new Color(34, 39, 74));
+            field.setForeground(Color.WHITE);
+            field.setCaretColor(Color.WHITE);
+            field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(70, 75, 120)),
+                new EmptyBorder(6, 10, 6, 10)
+            ));
+
+            JLabel label = new JLabel("Enter the name of your quiz source file (e.g., quiz.txt):");
+            label.setFont(new Font("Arial", Font.PLAIN, 13));
+            label.setForeground(new Color(200, 200, 220));
+
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            panel.setBackground(new Color(24, 28, 48));
+            panel.add(label);
+            panel.add(Box.createRigidArea(new Dimension(0, 8)));
+            panel.add(field);
+
+            UIManager.put("OptionPane.background", new Color(24, 28, 48));
+            UIManager.put("Panel.background", new Color(24, 28, 48));
+            UIManager.put("OptionPane.messageForeground", Color.WHITE);
+
+            int result = JOptionPane.showConfirmDialog(window, panel,
+                "Load Quiz Configuration", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                String fileName = field.getText().trim();
+                if (!fileName.isEmpty()) window.hostLoadAndStartQuiz(fileName);
             }
         });
 
-        // CHANGED: assemble with Box spacing like first panel
+        // CHANGED: assemble with Box spacing
         add(titleLabel);
         add(Box.createRigidArea(new Dimension(0, 20)));
         add(portCaption);
@@ -117,7 +134,7 @@ public class LobbyPanel extends JPanel {
             listModel.clear();
             for (String p : players) listModel.addElement(p);
 
-            // CHANGED: also rebuild chip labels in the visual panel, like the first panel does
+            // CHANGED: also rebuild chip labels in the visual panel
             JPanel chipPanel = (JPanel) getClientProperty("chipPanel");
             chipPanel.removeAll();
             Color[] chipColors = {
@@ -137,7 +154,7 @@ public class LobbyPanel extends JPanel {
                 chipPanel.add(Box.createRigidArea(new Dimension(0, 6)));
                 ci++;
             }
-            // CHANGED: update count label like first panel
+            // CHANGED: update count label
             countLabel.setText(players.size() + " player(s) joined");
             chipPanel.revalidate();
             chipPanel.repaint();

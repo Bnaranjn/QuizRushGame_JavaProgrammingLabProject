@@ -64,8 +64,6 @@ public class JoinPanel extends JPanel {
         submitConnectionBtn.setMaximumSize(new Dimension(260, 52));
 
         submitConnectionBtn.addActionListener(e -> {
-            // FIXED: read field text directly — no getFieldValue() needed since these are
-            // real default values, not visual-only placeholders that should be ignored
             String ip      = ipInputField.getText().trim();
             String portStr = portInputField.getText().trim();
             String name    = profileNameField.getText().trim();
@@ -107,5 +105,4 @@ public class JoinPanel extends JPanel {
         ));
         return field;
     }
-    // REMOVED: getFieldValue() — was treating real defaults as placeholders and blocking submission
 }

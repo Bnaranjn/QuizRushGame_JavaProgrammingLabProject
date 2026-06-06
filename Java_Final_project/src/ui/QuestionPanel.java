@@ -13,12 +13,10 @@ public class QuestionPanel extends JPanel {
     private int timeLeft = 20;
     private Timer countdownTimer;
 
-    // CHANGED: colours matched to first panel
-    private static final Color BG        = new Color(18, 18, 30);  // was (24,28,48) — darker like first panel
-    private static final Color TOP_BG    = new Color(28, 28, 45);  // CHANGED: top bar gets its own darker strip
+    private static final Color BG        = new Color(18, 18, 30);  
+    private static final Color TOP_BG    = new Color(28, 28, 45);  
     private static final Color TEXT_COLOR = Color.WHITE;
 
-    // CHANGED: 4 distinct answer colours from first panel instead of one flat BTN_BG
     private static final Color[] ANSWER_COLORS = {
         new Color(220, 55,  65),   // red
         new Color(55,  120, 190),  // blue
@@ -30,23 +28,23 @@ public class QuestionPanel extends JPanel {
         this.window = window;
         setLayout(new BorderLayout());
         setBackground(BG);
-        // CHANGED: removed outer EmptyBorder — first panel has no padding on the root
+        // CHANGED: removed outer EmptyBorder
 
         // ── Top bar ───────────────────────────────────────────────────────────
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(TOP_BG);                          // CHANGED: distinct top bar colour
-        topPanel.setBorder(new EmptyBorder(14, 20, 14, 20));     // CHANGED: padding matches first panel
+        topPanel.setBorder(new EmptyBorder(14, 20, 14, 20));     
 
-        // CHANGED: added question number label on the left, like first panel
+        // CHANGED: added question number label on the left
         JLabel questionNumber = new JLabel("Question");
         questionNumber.setForeground(TEXT_COLOR);
         questionNumber.setFont(new Font("Arial", Font.BOLD, 17));
         topPanel.add(questionNumber, BorderLayout.WEST);
 
-        // CHANGED: timer shows just the number (no "Time:" prefix), yellow like first panel
+        // CHANGED: timer shows just the number (no "Time:" prefix)
         timerLabel = new JLabel("20", SwingConstants.RIGHT);
         timerLabel.setFont(new Font("Arial", Font.BOLD, 30));    // CHANGED: was 22pt
-        timerLabel.setForeground(new Color(255, 200, 0));        // CHANGED: was red, now yellow
+        timerLabel.setForeground(new Color(255, 200, 0));        
         topPanel.add(timerLabel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
@@ -54,7 +52,7 @@ public class QuestionPanel extends JPanel {
         JPanel centerPanel = new JPanel();
         centerPanel.setBackground(BG);
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBorder(new EmptyBorder(40, 40, 40, 40));  // CHANGED: matches first panel padding
+        centerPanel.setBorder(new EmptyBorder(40, 40, 40, 40));  
 
         questionLabel = new JLabel("<html><div style='text-align:center;'>Loading question...</div></html>", SwingConstants.CENTER);
         questionLabel.setFont(new Font("Arial", Font.BOLD, 26)); // CHANGED: was 22pt
@@ -63,19 +61,16 @@ public class QuestionPanel extends JPanel {
         centerPanel.add(questionLabel);
         add(centerPanel, BorderLayout.CENTER);
 
-        // ── Answer buttons ────────────────────────────────────────────────────
-        // CHANGED: switched from GridLayout(4,1) single column to GridLayout(2,2) 2x2 grid like first panel
         JPanel optionsGrid = new JPanel(new GridLayout(2, 2, 12, 12));
-        optionsGrid.setBorder(new EmptyBorder(16, 16, 20, 16));  // CHANGED: matches first panel
+        optionsGrid.setBorder(new EmptyBorder(16, 16, 20, 16)); 
         optionsGrid.setBackground(BG);
-        // CHANGED: removed fixed preferredSize — let layout breathe like first panel
 
         optionButtons = new JButton[4];
         for (int i = 0; i < 4; i++) {
             final int choiceIndex = i + 1;
             optionButtons[i] = new JButton();
-            optionButtons[i].setFont(new Font("Arial", Font.BOLD, 18)); // CHANGED: bold like first panel
-            optionButtons[i].setBackground(ANSWER_COLORS[i]);           // CHANGED: per-button colour
+            optionButtons[i].setFont(new Font("Arial", Font.BOLD, 18)); 
+            optionButtons[i].setBackground(ANSWER_COLORS[i]);          
             optionButtons[i].setForeground(TEXT_COLOR);
             optionButtons[i].setFocusPainted(false);
             optionButtons[i].setBorder(BorderFactory.createEmptyBorder(24, 16, 24, 16)); // CHANGED: taller buttons
@@ -121,7 +116,7 @@ public class QuestionPanel extends JPanel {
     private void commitSelection(int index) {
         stopTimer();
         setOptionsEnabled(false);
-        timerLabel.setText("Ok");                                 // CHANGED: checkmark instead of "Locked In"
+        timerLabel.setText("Locked In");                              
         window.submitPlayerAnswer(index, timeLeft);
     }
 

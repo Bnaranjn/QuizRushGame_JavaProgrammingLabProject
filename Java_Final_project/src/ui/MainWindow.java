@@ -41,7 +41,7 @@ public class MainWindow extends JFrame implements MessageListener {
     private static final int DEFAULT_FALLBACK_PORT = 5000; 
 
     public MainWindow() {
-        setTitle("QuizRush Framework Engine");
+        setTitle("QuizRush");
         setSize(480, 600);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Intercept manually
         setLocationRelativeTo(null);
