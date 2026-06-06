@@ -14,7 +14,7 @@ public class LobbyPanel extends JPanel {
     private final JLabel countLabel; // CHANGED: added player count label
     
 
-    // CHANGED: colour palette
+    //CHANGED: colour palette
     private static final Color BG         = new Color(24, 28, 48);
     private static final Color TEXT_COLOR = Color.WHITE;
 
@@ -22,12 +22,12 @@ public class LobbyPanel extends JPanel {
         this.window = window;
         this.listModel = new DefaultListModel<>();
 
-        // CHANGED: switched from BorderLayout to BoxLayout Y_AXIS
+        //CHANGED: switched from BorderLayout to BoxLayout Y_AXIS
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(BG);
         setBorder(new EmptyBorder(50, 60, 50, 60)); 
 
-        // CHANGED: title style
+        //CHANGED: title style
         JLabel titleLabel = new JLabel("QuizRush - Lobby");
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
@@ -37,13 +37,13 @@ public class LobbyPanel extends JPanel {
         portCaption.setFont(new Font("Arial", Font.BOLD, 15));
         portCaption.setForeground(new Color(180, 180, 200));
 
-        // CHANGED: port number now large yellow 44pt
+        //CHANGED: port number now large yellow 44pt
         lobbyCodeLabel = new JLabel("----");
         lobbyCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         lobbyCodeLabel.setFont(new Font("Arial", Font.BOLD, 44));
         lobbyCodeLabel.setForeground(new Color(255, 215, 0));
 
-        // CHANGED: player count label
+        //CHANGED: player count label
         countLabel = new JLabel("0 player(s) joined");
         countLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         countLabel.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -63,7 +63,7 @@ public class LobbyPanel extends JPanel {
         scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
         scroll.getViewport().setBackground(BG);
 
-        // CHANGED: Start Quiz button style
+        
         startBtn = new JButton("Start Quiz");
         startBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         startBtn.setFont(new Font("Arial", Font.BOLD, 18));
@@ -86,22 +86,22 @@ public class LobbyPanel extends JPanel {
         add(Box.createRigidArea(new Dimension(0, 24)));
         add(startBtn);
 
-        // store chip panel ref for updatePlayerList
+        //store chip panel ref for updatePlayerList
         putClientProperty("chipPanel", playerListPanel);
     }
 
     public void setRoomPortDisplay(int activePort) {
-        // CHANGED: show just the number (caption is a separate label above)
+        
         SwingUtilities.invokeLater(() -> lobbyCodeLabel.setText(String.valueOf(activePort)));
     }
 
     public void updatePlayerList(List<String> players) {
         SwingUtilities.invokeLater(() -> {
-            // update the hidden model (keeps API intact)
+            
             listModel.clear();
             for (String p : players) listModel.addElement(p);
 
-            // CHANGED: also rebuild chip labels in the visual panel
+            
             JPanel chipPanel = (JPanel) getClientProperty("chipPanel");
             chipPanel.removeAll();
             Color[] chipColors = {
@@ -121,7 +121,7 @@ public class LobbyPanel extends JPanel {
                 chipPanel.add(Box.createRigidArea(new Dimension(0, 6)));
                 ci++;
             }
-            // CHANGED: update count label
+            
             countLabel.setText((players.size()-1) + " player(s) joined");
             chipPanel.revalidate();
             chipPanel.repaint();

@@ -1,4 +1,5 @@
 package ui;
+//remodified on 6/6 
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,19 +26,20 @@ public class RevealPanel extends JPanel {
         setBackground(BG);
         setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Title
+        // title
         JLabel titleLabel = new JLabel("ROUND RESULTS", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 26));
         titleLabel.setForeground(GOLD);
         titleLabel.setBorder(new EmptyBorder(5, 10, 14, 10));
         add(titleLabel, BorderLayout.NORTH);
 
-        // Center: correct answer card + standings list
+        // center: correct answer card &standings list
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBackground(BG);
 
-        // Correct answer card
+        //correct answer 
+        //modified 6.6
         JPanel correctCard = new JPanel(new BorderLayout(0, 4));
         correctCard.setBackground(new Color(26, 58, 42));
         correctCard.setBorder(BorderFactory.createCompoundBorder(
@@ -59,7 +61,7 @@ public class RevealPanel extends JPanel {
         centerPanel.add(correctCard);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        // Standings list
+        // list
         listContainer = new JPanel();
         listContainer.setLayout(new BoxLayout(listContainer, BoxLayout.Y_AXIS));
         listContainer.setBackground(BG);
@@ -72,7 +74,7 @@ public class RevealPanel extends JPanel {
         centerPanel.add(scroll);
         add(centerPanel, BorderLayout.CENTER);
 
-        // Footer button
+        //footer button for the host
         nextBtn = new JButton("Next");
         nextBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 	    nextBtn.setFont(new Font("Arial", Font.BOLD, 16));

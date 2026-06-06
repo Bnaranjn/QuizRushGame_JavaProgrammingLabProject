@@ -18,37 +18,37 @@ public class QuestionPanel extends JPanel {
     private static final Color TEXT_COLOR = Color.WHITE;
 
     private static final Color[] ANSWER_COLORS = {
-        new Color(220, 55,  65),   // red
-        new Color(55,  120, 190),  // blue
-        new Color(240, 170, 0),    // yellow
-        new Color(60,  165, 70)    // green
+        new Color(220, 55,  65),   //red
+        new Color(55,  120, 190),  //blue
+        new Color(240, 170, 0),    //yellow
+        new Color(60,  165, 70)    //green
     };
 
     public QuestionPanel(MainWindow window) {
         this.window = window;
         setLayout(new BorderLayout());
         setBackground(BG);
-        // CHANGED: removed outer EmptyBorder
+        //CHANGED: removed outer EmptyBorder
 
-        // ── Top bar ───────────────────────────────────────────────────────────
+        //  top bar
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(TOP_BG);                          // CHANGED: distinct top bar colour
+        topPanel.setBackground(TOP_BG);                          // CHANGED:  top bar colour
         topPanel.setBorder(new EmptyBorder(14, 20, 14, 20));     
 
-        // CHANGED: added question number label on the left
+        
         JLabel questionNumber = new JLabel("Question");
         questionNumber.setForeground(TEXT_COLOR);
         questionNumber.setFont(new Font("Arial", Font.BOLD, 17));
         topPanel.add(questionNumber, BorderLayout.WEST);
 
-        // CHANGED: timer shows just the number (no "Time:" prefix)
+        
         timerLabel = new JLabel("20", SwingConstants.RIGHT);
         timerLabel.setFont(new Font("Arial", Font.BOLD, 30));    // CHANGED: was 22pt
         timerLabel.setForeground(new Color(255, 200, 0));        
         topPanel.add(timerLabel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // ── Question text ─────────────────────────────────────────────────────
+        //question text
         JPanel centerPanel = new JPanel();
         centerPanel.setBackground(BG);
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -95,12 +95,12 @@ public class QuestionPanel extends JPanel {
     public void startTimer(int seconds) {
         stopTimer();
         this.timeLeft = seconds;
-        timerLabel.setText(String.valueOf(timeLeft));            // CHANGED: no "Time:" prefix
-        timerLabel.setForeground(new Color(255, 200, 0));        // reset to yellow each round
+        timerLabel.setText(String.valueOf(timeLeft));            
+        timerLabel.setForeground(new Color(255, 200, 0));        
         countdownTimer = new Timer(1000, e -> {
             timeLeft--;
             timerLabel.setText(String.valueOf(timeLeft));        // CHANGED: plain number
-            if (timeLeft <= 5) timerLabel.setForeground(Color.RED); // CHANGED: red warning like first panel
+            if (timeLeft <= 5) timerLabel.setForeground(Color.RED); // CHANGED:red warning
             if (timeLeft <= 0) {
                 stopTimer();
                 commitSelection(-1);
