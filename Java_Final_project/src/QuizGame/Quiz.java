@@ -42,12 +42,12 @@ public class Quiz {
 
     private void loadFallbackQuestions() {
         questionBank.add(new Question("Which programming language uses JVM execution routines?", 
-                new String[]{"Python", "C++", "Java", "Ruby"}, 3));
+                new String[]{"Python", "C++", "Java", "Ruby"}, 2));
         questionBank.add(new Question("What is the time complexity of looking up an item in a balanced HashMap?", 
-                new String[]{"O(n)", "O(1)", "O(log n)", "O(n log n)"}, 2));
+                new String[]{"O(n)", "O(1)", "O(log n)", "O(n log n)"}, 1));
         questionBank.add(new Question("Which protocol provides reliable, ordered communication streams?", 
-                new String[]{"UDP", "TCP", "ICMP", "DNS"}, 2));
+                new String[]{"UDP", "TCP", "ICMP", "DNS"}, 1));
         questionBank.add(new Question("What design pattern ensures a class has only one instance?", 
-                new String[]{"Factory", "Observer", "Singleton", "Adapter"}, 3));
+                new String[]{"Factory", "Observer", "Singleton", "Adapter"}, 2));
     }
 }

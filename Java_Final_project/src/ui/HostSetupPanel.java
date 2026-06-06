@@ -58,7 +58,8 @@ public class HostSetupPanel extends JPanel {
                     JOptionPane.showMessageDialog(window, "Please enter a valid custom port number between 1024 and 65535.", "Port Bounds Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                window.startHosting(selectedPort);
+                window.setPendingPort(selectedPort);
+                window.showScreen(MainWindow.SCREEN_QUESTION_PICKER);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(window, "Port assignments must be plain numerical values.", "Formatting Error", JOptionPane.ERROR_MESSAGE);
             }

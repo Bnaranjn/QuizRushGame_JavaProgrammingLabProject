@@ -90,10 +90,10 @@ public class RevealPanel extends JPanel {
         add(footerPanel, BorderLayout.SOUTH);
     }
 
-    public void showResults(int correctIndex, Map<String, Integer> currentStandings, String myName, boolean isHost) {
+    public void showResults(String correctText, Map<String, Integer> currentStandings, String myName, boolean isHost) {
         SwingUtilities.invokeLater(() -> {
             nextBtn.setVisible(isHost);
-            correctOptionLabel.setText("Option " + (correctIndex));
+            correctOptionLabel.setText(correctText);
 
             listContainer.removeAll();
 

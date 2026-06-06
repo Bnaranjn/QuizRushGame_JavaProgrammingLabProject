@@ -67,7 +67,7 @@ public class QuestionPanel extends JPanel {
 
         optionButtons = new JButton[4];
         for (int i = 0; i < 4; i++) {
-            final int choiceIndex = i + 1;
+            final int choiceIndex = i;
             optionButtons[i] = new JButton();
             optionButtons[i].setFont(new Font("Arial", Font.BOLD, 18)); 
             optionButtons[i].setBackground(ANSWER_COLORS[i]);          

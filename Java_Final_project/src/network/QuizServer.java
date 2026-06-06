@@ -160,6 +160,7 @@ public class QuizServer {
     private void evaluateRoundAnswers() {
         Question q = activeQuiz.getQuestionAt(currentQuestionIdx);
         int correctIdx = q.getCorrectOptionIndex();
+        String correctText = q.getOption(correctIdx);
 
         for (Player p : playerRoster.values()) {
             if (p.isHost()) continue;
@@ -169,7 +170,7 @@ public class QuizServer {
             p.resetAnswer();
         }
 
-        StringBuilder sb = new StringBuilder("REVEAL|").append(correctIdx).append("|");
+        StringBuilder sb = new StringBuilder("REVEAL|").append(correctText).append("|");
         for (Map.Entry<String, Player> entry : playerRoster.entrySet()) {
             if (entry.getKey().equalsIgnoreCase("Host")) continue;
             sb.append(entry.getKey()).append(":").append(entry.getValue().getScore()).append(",");

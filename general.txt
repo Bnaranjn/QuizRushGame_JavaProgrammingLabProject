@@ -1,0 +1,12 @@
+What is the capital of France?|Berlin|Madrid|Paris|Rome|2
+Which planet is known as the Red Planet?|Venus|Mars|Jupiter|Saturn|1
+How many sides does a hexagon have?|5|6|7|8|1
+What is the capital of Japan?|Beijing|Seoul|Bangkok|Tokyo|3
+Which element has the chemical symbol O?|Gold|Oxygen|Osmium|Oganesson|1
+Who painted the Mona Lisa?|Picasso|Van Gogh|Da Vinci|Rembrandt|2
+What is 12 x 12?|124|144|132|156|1
+Which ocean is the largest?|Atlantic|Indian|Arctic|Pacific|3
+How many bones are in the adult human body?|186|206|226|246|1
+What language is most spoken in Brazil?|Spanish|English|Portuguese|French|2
+Which gas do plants absorb from the atmosphere?|Oxygen|Nitrogen|Carbon Dioxide|Hydrogen|2
+What is the longest river in the world?|Amazon|Yangtze|Mississippi|Nile|3

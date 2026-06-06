@@ -38,7 +38,14 @@ public class MainWindow extends JFrame implements MessageListener {
     private boolean isHostNode = false;
     private int connectedPlayerCount = 0;
     
+    private String pendingQuestionFile = "general.txt";
+    private int pendingPort = 5000;
+    
     private static final int DEFAULT_FALLBACK_PORT = 5000; 
+    
+    public static final String SCREEN_QUESTION_PICKER = "QUESTION_PICKER_VIEW";
+
+    private QuestionSetPickerPanel questionSetPickerPanel;
 
     public MainWindow() {
         setTitle("QuizRush");
@@ -63,6 +70,7 @@ public class MainWindow extends JFrame implements MessageListener {
         revealPanel = new RevealPanel(this);
         betPanel = new BetPanel(this);
         leaderboardPanel = new LeaderboardPanel(this);
+        questionSetPickerPanel = new QuestionSetPickerPanel(this);
 
         cardContainer.add(setupPanel, SCREEN_SETUP);
         cardContainer.add(joinPanel, SCREEN_JOIN);
@@ -73,6 +81,7 @@ public class MainWindow extends JFrame implements MessageListener {
         cardContainer.add(revealPanel, SCREEN_REVEAL);
         cardContainer.add(betPanel, SCREEN_BET);
         cardContainer.add(leaderboardPanel, SCREEN_LEADERBOARD);
+        cardContainer.add(questionSetPickerPanel, SCREEN_QUESTION_PICKER);
 
         add(cardContainer);
         showScreen(SCREEN_SETUP);
@@ -132,6 +141,11 @@ public class MainWindow extends JFrame implements MessageListener {
             networkClientLink.send("START_GAME|" + filename);
         }
     }
+    
+    public void setPendingPort(int port) { this.pendingPort = port; }
+    public int getPendingPort() { return pendingPort; }
+    public void setPendingQuestionFile(String file) { this.pendingQuestionFile = file; }
+    public String getPendingQuestionFile() { return pendingQuestionFile; }
 
     public void submitPlayerAnswer(int chosenIndex, int remainingTimeSeconds) {
         if (isHostNode) return;
@@ -218,10 +232,11 @@ public class MainWindow extends JFrame implements MessageListener {
                 break;
 
             case "REVEAL":
-                int correctChoiceIdx = Integer.parseInt(parts[1]);
+                //int correctChoiceIdx = Integer.parseInt(parts[1]);
+                String correctText = parts[1];
                 Map<String, Integer> currentScores = parseStandingsMap(parts.length > 2 ? parts[2] : "");
 
-                revealPanel.showResults(correctChoiceIdx, currentScores, playerNickname, isHostNode);
+                revealPanel.showResults(correctText, currentScores, playerNickname, isHostNode);
                 showScreen(SCREEN_REVEAL);
                 break;
 

@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
+import java.io.File;
 
 public class LobbyPanel extends JPanel {
     private final MainWindow window;
@@ -11,6 +12,7 @@ public class LobbyPanel extends JPanel {
     private final JButton startBtn;
     private final JLabel lobbyCodeLabel;
     private final JLabel countLabel; // CHANGED: added player count label
+    
 
     // CHANGED: colour palette
     private static final Color BG         = new Color(24, 28, 48);
@@ -70,43 +72,8 @@ public class LobbyPanel extends JPanel {
         startBtn.setFocusPainted(false);
         startBtn.setBorder(new EmptyBorder(12, 40, 12, 40)); 
         startBtn.setMaximumSize(new Dimension(260, 52));
-
-        startBtn.addActionListener(e -> {
-            JTextField field = new JTextField(20);
-            field.setFont(new Font("Arial", Font.PLAIN, 14));
-            field.setBackground(new Color(34, 39, 74));
-            field.setForeground(Color.WHITE);
-            field.setCaretColor(Color.WHITE);
-            field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(70, 75, 120)),
-                new EmptyBorder(6, 10, 6, 10)
-            ));
-
-            JLabel label = new JLabel("Enter the name of your quiz source file (e.g., quiz.txt):");
-            label.setFont(new Font("Arial", Font.PLAIN, 13));
-            label.setForeground(new Color(200, 200, 220));
-
-            JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.setBackground(new Color(24, 28, 48));
-            panel.add(label);
-            panel.add(Box.createRigidArea(new Dimension(0, 8)));
-            panel.add(field);
-
-            UIManager.put("OptionPane.background", new Color(24, 28, 48));
-            UIManager.put("Panel.background", new Color(24, 28, 48));
-            UIManager.put("OptionPane.messageForeground", Color.WHITE);
-
-            int result = JOptionPane.showConfirmDialog(window, panel,
-                "Load Quiz Configuration", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-            if (result == JOptionPane.OK_OPTION) {
-                String fileName = field.getText().trim();
-                if (!fileName.isEmpty()) window.hostLoadAndStartQuiz(fileName);
-            }
-        });
-
-        // CHANGED: assemble with Box spacing
+        startBtn.addActionListener(e -> window.hostLoadAndStartQuiz(window.getPendingQuestionFile()));
+        
         add(titleLabel);
         add(Box.createRigidArea(new Dimension(0, 20)));
         add(portCaption);
@@ -155,7 +122,7 @@ public class LobbyPanel extends JPanel {
                 ci++;
             }
             // CHANGED: update count label
-            countLabel.setText(players.size() + " player(s) joined");
+            countLabel.setText((players.size()-1) + " player(s) joined");
             chipPanel.revalidate();
             chipPanel.repaint();
         });
