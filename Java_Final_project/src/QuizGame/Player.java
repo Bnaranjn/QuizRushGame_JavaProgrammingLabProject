@@ -49,6 +49,7 @@ public class Player extends User {
     public void placeBet(int amount, int multiplier) {
 
         // reset bet if amount is invalid
+    	// InvalidBetException - no longer needed
         if (amount < 0 || amount > this.score) {
             this.currentWager = 0;
             this.betMultiplier = 1;
