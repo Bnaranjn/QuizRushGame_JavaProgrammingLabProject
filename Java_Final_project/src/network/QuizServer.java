@@ -80,23 +80,34 @@ public class QuizServer {
 
         switch (command) {
 
-            case "JOIN":
-                String joinName = tokens[1];
+        
+        case "JOIN":
+            String requestedName = tokens[1];
 
-                // add player if name not already used
-                if (!playerRoster.containsKey(joinName)) {
-                    Player newPlayer = new Player(joinName);
-
-                    // special handling for host
-                    if (joinName.equalsIgnoreCase("Host")) {
-                        newPlayer.setHost(true);
-                    }
-
-                    playerRoster.put(joinName, newPlayer);
+            // if the name is already taken, keep appending a number until it's unique
+            String assignedName = requestedName;
+            if (!assignedName.equalsIgnoreCase("Host") && playerRoster.containsKey(assignedName)) {
+                int suffix = 2;
+                while (playerRoster.containsKey(assignedName)) {
+                    // strip any previously appended suffix before adding the new one
+                    String base = requestedName.replaceAll("_\\d+$", "");
+                    assignedName = base + "_" + suffix;
+                    suffix++;
                 }
+            }
 
-                broadcastPlayerRoster();
-                break;
+            // create and register the player with the final assigned name
+            Player newPlayer = new Player(assignedName);
+            if (assignedName.equalsIgnoreCase("Host")) {
+                newPlayer.setHost(true);
+            }
+            playerRoster.put(assignedName, newPlayer);
+
+            // tell this specific client what name they were actually given
+            sender.send("JOIN_ACK|" + assignedName);
+
+            broadcastPlayerRoster();
+            break;
 
             case "LEAVE":
                 String leaveName = tokens[1];

@@ -213,6 +213,23 @@ public class MainWindow extends JFrame implements MessageListener {
         String header = parts[0];
 
         switch (header) {
+        
+	        case "JOIN_ACK":
+	            // server confirmed our actual assigned name (may differ if duplicate)
+	            String confirmedName = parts[1];
+	            if (!confirmedName.equals(playerNickname)) {
+	                playerNickname = confirmedName; // update nickname to what server assigned
+	                // notify the player if their name was changed
+	                SwingUtilities.invokeLater(() ->
+	                    JOptionPane.showMessageDialog(
+	                        MainWindow.this,
+	                        "That name was already taken. You joined as: " + confirmedName,
+	                        "Name Assigned",
+	                        JOptionPane.INFORMATION_MESSAGE
+	                    )
+	                );
+	            }
+	            break;
 
             case "SERVER_SHUTDOWN":
                 // Host closed the room — disconnect and inform the player
