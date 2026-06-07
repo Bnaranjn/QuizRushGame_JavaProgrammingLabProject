@@ -20,7 +20,7 @@ public class MainWindow extends JFrame implements MessageListener {
     public static final String SCREEN_BET = "BET_VIEW";
     public static final String SCREEN_LEADERBOARD = "LEADERBOARD_VIEW";
 
-    // CardLayout and its container panel � all screens live inside cardContainer
+    // CardLayout and its container panel  all screens live inside cardContainer
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardContainer = new JPanel(cardLayout);
 
@@ -35,7 +35,7 @@ public class MainWindow extends JFrame implements MessageListener {
     private LeaderboardPanel leaderboardPanel;
     private BetPanel betPanel;
 
-    // Network layer references � server is only created when this player is the host
+    // Network layer references server is only created when this player is the host
     private QuizServer localServerInstance;
     private QuizClient networkClientLink;
 
@@ -232,7 +232,7 @@ public class MainWindow extends JFrame implements MessageListener {
 	            break;
 
             case "SERVER_SHUTDOWN":
-                // Host closed the room � disconnect and inform the player
+                // Host closed the room  disconnect and inform the player
                 networkClientLink.disconnect();
                 JOptionPane.showMessageDialog(this, "The Host has terminated the game session room. Closing application window.", "Session Closed", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
@@ -256,7 +256,7 @@ public class MainWindow extends JFrame implements MessageListener {
 
             case "QUESTION":
                 if (isHostNode) {
-                    // Host just monitors � doesn't answer
+                    // Host just monitors   doesn't answer
                     hostWaitingPanel.setMessage("ROUND PROGRESS TRACKER", "Players are currently answering questions...");
                     showScreen(SCREEN_HOST_WAITING);
                 } else {
@@ -305,7 +305,7 @@ public class MainWindow extends JFrame implements MessageListener {
                 break;
 
             case "GAME_OVER":
-                // Game finished � show the final leaderboard with everyone's scores
+                // Game finished show the final leaderboard with everyone's scores
                 Map<String, Integer> terminalScores = parseStandingsMap(parts[1]);
                 leaderboardPanel.displayFinalStandings(terminalScores, playerNickname);
                 showScreen(SCREEN_LEADERBOARD);
