@@ -2,8 +2,10 @@ package ui;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 
+// Panel shown during the betting phase of the game
 public class BetPanel extends JPanel {
     private final MainWindow window;
     private int localScore = 0;
@@ -27,6 +29,7 @@ public class BetPanel extends JPanel {
     private static final Color TEXT    = Color.WHITE;
 
     public BetPanel(MainWindow window) {
+
         this.window = window;
         setBackground(BG);
         setLayout(new BorderLayout());
@@ -36,7 +39,7 @@ public class BetPanel extends JPanel {
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setBackground(BG);
 
-        // Score display
+        // Shows the player's current score
         scoreLabel = new JLabel("0 pts");
         scoreLabel.setForeground(GOLD);
         scoreLabel.setFont(new Font("Arial", Font.BOLD, 22));
@@ -47,13 +50,13 @@ public class BetPanel extends JPanel {
         scoreSub.setFont(new Font("Arial", Font.PLAIN, 12));
         scoreSub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Timer
+        // Countdown timer for the betting round
         timerLabel = new JLabel("30");
         timerLabel.setForeground(GOLD);
         timerLabel.setFont(new Font("Arial", Font.BOLD, 20));
         timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Title
+        // Main heading and description
         JLabel title = new JLabel("Bet Round!");
         title.setForeground(TEXT);
         title.setFont(new Font("Arial", Font.BOLD, 26));
@@ -64,40 +67,47 @@ public class BetPanel extends JPanel {
         sub.setFont(new Font("Arial", Font.PLAIN, 13));
         sub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Wager buttons
+        // Buttons for selecting how much of the score to wager
         JPanel wagerPanel = new JPanel(new GridLayout(1, 4, 8, 0));
         wagerPanel.setBackground(BG);
         wagerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
         int[] percents = {25, 50, 75, 100};
         String[] wagerLabels = {"25%", "50%", "75%", "All in"};
+
         wagerBtns = new JButton[4];
+
         for (int i = 0; i < percents.length; i++) {
             final int pct = percents[i];
+
             wagerBtns[i] = makeWagerBtn(wagerLabels[i]);
+
             wagerBtns[i].addActionListener(e -> {
                 wagerPercent = pct;
                 highlightWager(pct);
                 recalculateWagerMetrics();
             });
+
             wagerPanel.add(wagerBtns[i]);
         }
 
-        // Win/lose preview card
+        // Displays potential gain or loss based on the selected wager
         JLabel winLabel  = new JLabel("+0 pts");
         JLabel loseLabel = new JLabel("-0 pts");
+
         winLabel.setFont(new Font("Arial", Font.BOLD, 18));
         loseLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
         winLabel.setForeground(GREEN);
         loseLabel.setForeground(RED);
+
         loseLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        // Store references so recalculateWagerMetrics can update them
-        this.wagerPreviewLabel = new JLabel(); // kept for interface compatibility
+        // Placeholder label kept for compatibility with existing code
+        this.wagerPreviewLabel = new JLabel();
         this.wagerPreviewLabel.setVisible(false);
 
-        // We update win/lose labels directly, so keep them accessible via a wrapper trick:
-        // Instead, replace wagerPreviewLabel usage with a custom update approach below.
-        // See recalculateWagerMetrics() — we repurpose winLabel/loseLabel via fields.
+        // Store references so the preview values can be updated later
         this.winDisplayLabel  = winLabel;
         this.loseDisplayLabel = loseLabel;
 
@@ -110,7 +120,7 @@ public class BetPanel extends JPanel {
 
         JPanel winSide = new JPanel(new BorderLayout());
         winSide.setBackground(CARD_BG);
-        winSide.add(makeSmallLabel("if correct"),  BorderLayout.NORTH);
+        winSide.add(makeSmallLabel("if correct"), BorderLayout.NORTH);
         winSide.add(winLabel, BorderLayout.CENTER);
 
         JPanel loseSide = new JPanel(new BorderLayout());
@@ -121,12 +131,13 @@ public class BetPanel extends JPanel {
         previewPanel.add(winSide);
         previewPanel.add(loseSide);
 
-        // Skip + Place bet buttons
+        // Action buttons for skipping or confirming the bet
         JButton skipBtn = new JButton("Skip bet");
         skipBtn.setBackground(BG);
         skipBtn.setForeground(MUTED);
         skipBtn.setFont(new Font("Arial", Font.BOLD, 14));
         skipBtn.setFocusPainted(false);
+
         skipBtn.addActionListener(e -> {
             if (betTimer != null) betTimer.stop();
             wagerPercent = 0;
@@ -146,7 +157,6 @@ public class BetPanel extends JPanel {
         actionPanel.add(skipBtn);
         actionPanel.add(submitBtn);
 
-        // Assemble
         center.add(scoreSub);
         center.add(scoreLabel);
         center.add(Box.createRigidArea(new Dimension(0, 6)));
@@ -163,12 +173,14 @@ public class BetPanel extends JPanel {
         center.add(previewPanel);
         center.add(Box.createRigidArea(new Dimension(0, 18)));
         center.add(actionPanel);
+
         add(center, BorderLayout.CENTER);
 
+        // Default selection when the panel loads
         highlightWager(25);
     }
 
-    // Extra label fields for the win/lose preview
+    // Labels used to update the win/loss preview values
     private JLabel winDisplayLabel;
     private JLabel loseDisplayLabel;
 
@@ -181,31 +193,41 @@ public class BetPanel extends JPanel {
         scoreLabel.setText(localScore + " pts");
         highlightWager(25);
         recalculateWagerMetrics();
+
         submitBtn.setEnabled(true);
         submitBtn.setText("Place Bet >>");
 
+        // Restart the timer each time a new betting round begins
         if (betTimer != null && betTimer.isRunning()) betTimer.stop();
+
         betTimer = new Timer(1000, e -> {
             timeLeft--;
             timerLabel.setText(String.valueOf(timeLeft));
+
             if (timeLeft <= 10) timerLabel.setForeground(RED);
+
             if (timeLeft <= 0) {
                 betTimer.stop();
                 fireBetToNetwork();
             }
         });
+
         betTimer.start();
     }
 
+    // Recalculate the possible reward and penalty values
     private void recalculateWagerMetrics() {
-        int wagered     = (int)(localScore * (wagerPercent / 100.0));
-        int gain        = wagered * (selectedMultiplier - 1);
+        int wagered = (int)(localScore * (wagerPercent / 100.0));
+        int gain = wagered * (selectedMultiplier - 1);
+
         winDisplayLabel.setText("+" + gain + " pts");
         loseDisplayLabel.setText("-" + wagered + " pts");
     }
 
+    // Send the selected wager to the main game logic
     private void fireBetToNetwork() {
         if (betTimer != null) betTimer.stop();
+
         submitBtn.setEnabled(false);
         submitBtn.setText("Waiting for others...");
 
@@ -213,14 +235,20 @@ public class BetPanel extends JPanel {
         window.submitPlayerBet(finalWager, selectedMultiplier);
     }
 
+    // Highlights the currently selected wager button
     private void highlightWager(int val) {
         int[] vals = {25, 50, 75, 100};
+
         for (int i = 0; i < wagerBtns.length; i++) {
             boolean sel = (vals[i] == val);
-            wagerBtns[i].setBackground(sel ? new Color(90, 120, 255) : new Color(42, 47, 80));
+
+            wagerBtns[i].setBackground(
+                    sel ? new Color(90, 120, 255)
+                        : new Color(42, 47, 80));
         }
     }
 
+    // Creates a styled wager selection button
     private JButton makeWagerBtn(String text) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Arial", Font.BOLD, 13));
@@ -230,6 +258,7 @@ public class BetPanel extends JPanel {
         return btn;
     }
 
+    // Section heading used throughout the panel
     private JLabel sectionLabel(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setForeground(MUTED);
@@ -238,6 +267,7 @@ public class BetPanel extends JPanel {
         return lbl;
     }
 
+    // Small muted labels used in preview cards
     private JLabel makeSmallLabel(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setForeground(MUTED);

@@ -5,9 +5,11 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.File;
 
+// This panel lets the host pick which question set to use before opening the lobby
+// They can choose a preset set or load their own file
 public class QuestionSetPickerPanel extends JPanel {
     private final MainWindow window;
-    private String selectedFile = "general.txt";
+    private String selectedFile = "general.txt"; // default selection
 
     public QuestionSetPickerPanel(MainWindow window) {
         this.window = window;
@@ -15,6 +17,7 @@ public class QuestionSetPickerPanel extends JPanel {
         setBackground(new Color(24, 28, 48));
         setBorder(new EmptyBorder(60, 80, 60, 80));
 
+        // Screen title and subtitle
         JLabel title = new JLabel("Choose Questions");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setFont(new Font("Arial", Font.BOLD, 30));
@@ -25,23 +28,27 @@ public class QuestionSetPickerPanel extends JPanel {
         subtitle.setFont(new Font("Arial", Font.PLAIN, 14));
         subtitle.setForeground(new Color(144, 144, 176));
 
+        // Shows an error message if the loaded file doesn't exist
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         statusLabel.setForeground(new Color(255, 100, 100));
 
+        // Built-in question set cards
         JPanel generalCard = makeCard("General Knowledge", "general.txt");
         JPanel techCard    = makeCard("Tech & CS Fundamentals", "tech.txt");
 
+        // General is selected by default
         highlightCard(generalCard, true);
         highlightCard(techCard, false);
 
+        // Clicking a card updates the selection and adjusts the highlight
         generalCard.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 selectedFile = "general.txt";
                 highlightCard(generalCard, true);
                 highlightCard(techCard, false);
-                statusLabel.setText(" ");
+                statusLabel.setText(" "); // clear any previous error
             }
         });
         techCard.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -49,13 +56,15 @@ public class QuestionSetPickerPanel extends JPanel {
                 selectedFile = "tech.txt";
                 highlightCard(generalCard, false);
                 highlightCard(techCard, true);
-                statusLabel.setText(" ");
+                statusLabel.setText(" "); // clear any previous error
             }
         });
 
+        // Opens a dialog for the host to type in a custom file name
         JButton loadFileBtn = styledButton("Load from File", new Color(50, 54, 96));
         loadFileBtn.setForeground(new Color(157, 180, 255));
         loadFileBtn.addActionListener(e -> {
+            // Custom styled text input field for the file name
             JTextField field = new JTextField(20);
             field.setFont(new Font("Arial", Font.PLAIN, 14));
             field.setBackground(new Color(34, 39, 74));
@@ -70,6 +79,7 @@ public class QuestionSetPickerPanel extends JPanel {
             label.setFont(new Font("Arial", Font.PLAIN, 13));
             label.setForeground(new Color(200, 200, 220));
 
+            // Panel that holds the label and input field inside the dialog
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
             panel.setBackground(new Color(24, 28, 48));
@@ -77,6 +87,7 @@ public class QuestionSetPickerPanel extends JPanel {
             panel.add(Box.createRigidArea(new Dimension(0, 8)));
             panel.add(field);
 
+            // Style the dialog to match the dark theme
             UIManager.put("OptionPane.background", new Color(24, 28, 48));
             UIManager.put("Panel.background", new Color(24, 28, 48));
             UIManager.put("OptionPane.messageForeground", Color.WHITE);
@@ -87,6 +98,7 @@ public class QuestionSetPickerPanel extends JPanel {
             if (result == JOptionPane.OK_OPTION) {
                 String fileName = field.getText().trim();
                 if (fileName.isEmpty()) return;
+                // Check the file actually exists before proceeding
                 if (!new File(fileName).exists()) {
                     statusLabel.setText("Couldn't find file: " + fileName);
                     return;
@@ -96,16 +108,19 @@ public class QuestionSetPickerPanel extends JPanel {
             }
         });
 
+        // Confirms the selected preset and opens the lobby
         JButton openLobbyBtn = styledButton("Open Lobby", new Color(90, 120, 255));
         openLobbyBtn.addActionListener(e -> {
             window.setPendingQuestionFile(selectedFile);
             window.startHosting(window.getPendingPort());
         });
 
+        // Goes back to the setup screen without doing anything
         JButton backBtn = styledButton("Back", new Color(50, 54, 96));
         backBtn.setForeground(new Color(144, 144, 176));
         backBtn.addActionListener(e -> window.showScreen(MainWindow.SCREEN_SETUP));
 
+        // Add everything to the panel in order with spacing between elements
         add(title);
         add(Box.createRigidArea(new Dimension(0, 6)));
         add(subtitle);
@@ -123,6 +138,7 @@ public class QuestionSetPickerPanel extends JPanel {
         add(backBtn);
     }
 
+    // Builds a clickable card showing the question set name and its file name
     private JPanel makeCard(String name, String file) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(new Color(34, 39, 74));
@@ -137,6 +153,7 @@ public class QuestionSetPickerPanel extends JPanel {
         nameLabel.setFont(new Font("Arial", Font.BOLD, 15));
         nameLabel.setForeground(Color.WHITE);
 
+        // Smaller gray label showing the actual filename below the set name
         JLabel fileLabel = new JLabel(file);
         fileLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         fileLabel.setForeground(new Color(112, 112, 160));
@@ -152,6 +169,7 @@ public class QuestionSetPickerPanel extends JPanel {
         return card;
     }
 
+    // Highlights the selected card with a blue border, or resets it to the default gray
     private void highlightCard(JPanel card, boolean selected) {
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(
@@ -162,6 +180,7 @@ public class QuestionSetPickerPanel extends JPanel {
         ));
     }
 
+    // Shared button style used for all action buttons on this panel
     private JButton styledButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);

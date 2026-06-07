@@ -1,5 +1,6 @@
 package QuizGame;
 
+//stores a quiz question, answer choices and correct answer
 public class Question {
     private final String questionText;
     private final String[] options;
